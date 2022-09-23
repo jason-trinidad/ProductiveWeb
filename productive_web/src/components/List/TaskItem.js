@@ -1,19 +1,65 @@
-import React from 'react'
+import React, { useState } from "react";
 
-import TaskItemForm from './TaskItemForm'
+// TODO - add:
+// Edit
+// Delete
+// Indents
+// Do at
+// Deadline
+// Undo?
+// Keyboard shortcuts
 
-const TaskItem = (props) => {
-    // console.log('TaskItem.js');
+const TaskItemForm = (props) => {
+  const [enteredTitle, setEnteredTitle] = useState("");
+  const [inFocus, setInFocus] = useState(false);
+
+  const focusHandler = () => {
+    setInFocus((prevState) => {
+      console.log('Changed focus, focus is ' + (!prevState).toString())
+        return !prevState;
+    });
+  };
+
+  const titleChangeHandler = (event) => {
+    setEnteredTitle(event.target.value);
+  };
+
+  const submitHandler = (event) => {
+    event.preventDefault();
+
+    console.log("Form submitted");
+
+    // JSON format may be better going forward
+    const taskData = {
+        key: props.id,
+        title: enteredTitle,
+    }
+
     // "Carriage return"
-    const createNewTaskItemHandler = (taskData) => {
-        props.onCreateNewTaskItem(taskData) // When do we name things "on" exactly?
-    };
+    props.onCreateNewTaskItem(taskData);
+  };
 
-    return (
-        <li>
-            <TaskItemForm  onCreateNewTaskItem={createNewTaskItemHandler} />
-        </li>
-    )
+  // If in focus or new form, render enteredTitle. Otherwise, render props from list
+  let renderTitle;
+  if (inFocus || !props.title) {
+    renderTitle = enteredTitle;
+  } else {
+    renderTitle = props.title
+  }
+
+  return (
+    // Should each of these be a separate form? Or should I do multiple inputs for one form?
+    <form onSubmit={submitHandler}>
+      {console.log("TaskItem returned " + renderTitle)}
+      <input
+        autoFocus
+        type="text" 
+        value={renderTitle}
+        onFocus={focusHandler}
+        onBlur={focusHandler}
+        onChange={titleChangeHandler} />
+    </form>
+  );
 };
 
-export default TaskItem;
+export default TaskItemForm;
