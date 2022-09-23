@@ -15,19 +15,28 @@ const TaskItemForm = (props) => {
 
   const focusHandler = () => {
     setInFocus((prevState) => {
-      console.log('Changed focus, focus is ' + (!prevState).toString())
+    //   console.log('Changed focus, focus is ' + (!prevState).toString())
         return !prevState;
     });
   };
 
+  const keyShortsHandler = (event) => {
+    // console.log(event);
+    // console.log('Key pressed: ' + event.key);
+    if (event.key === "Backspace" && event.target.value === "") {
+        props.onConditionalDelete(props.id);
+    }
+  }
+
   const titleChangeHandler = (event) => {
+    // console.log('Input Type: ' + event.target.value);
     setEnteredTitle(event.target.value);
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
 
-    console.log("Form submitted");
+    // console.log("Form submitted");
 
     // JSON format may be better going forward
     const taskData = {
@@ -50,14 +59,15 @@ const TaskItemForm = (props) => {
   return (
     // Should each of these be a separate form? Or should I do multiple inputs for one form?
     <form onSubmit={submitHandler}>
-      {console.log("TaskItem returned " + renderTitle)}
+      {/* {console.log("TaskItem returned " + renderTitle)} */}
       <input
         autoFocus
         type="text" 
         value={renderTitle}
         onFocus={focusHandler}
         onBlur={focusHandler}
-        onChange={titleChangeHandler} />
+        onChange={titleChangeHandler}
+        onKeyDown={keyShortsHandler} /> {/* keyDown vs keyUp: keyDown will register long presses */}
     </form>
   );
 };
