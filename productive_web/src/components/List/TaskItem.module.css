@@ -1,0 +1,7 @@
+.TaskItem {
+    height: 40px; width: 350px;
+    margin: 0px;
+    font-size: 25px;
+    border-style: none none groove none;
+    outline: solid transparent;
+}
