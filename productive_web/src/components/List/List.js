@@ -3,29 +3,35 @@ import React, { useState } from "react";
 import TaskItem from "./TaskItem";
 
 const List = () => {
+  // Helpers
   const createRandomKey = () => Math.random().toString();
 
   // Initialize list of tasks to empty task
-  const [tasks, setTasks] = useState([{ key: createRandomKey() }]); // Key included for warning. TODO: fix
-  console.log("State created");
+  const [tasks, setTasks] = useState([{ key: createRandomKey() }]); // Key included for warning. TODO: fix hack
+
+  // Updates task title for a given key. Returns the TaskItem's index in the List.
+  const updateTitle = (taskData) => {
+    let i;
+    setTasks((prevTasks) => {
+      // Store edited task's title
+      i = prevTasks.findIndex((task) => task.key === taskData.key); // Better with find()?
+      prevTasks[i].title = taskData.title;
+      return [...prevTasks];
+    });
+
+    return i;
+  };
 
   // Add submitted task to list, create new task
   const createNewTaskItem = (taskData) => {
     setTasks((prevTasks) => {
       // Store edited task's title
-      const i = prevTasks.findIndex((task) => task.key === taskData.key);
-      prevTasks[i].title = taskData.title;
+      const i = updateTitle(taskData);
 
-      // Return list with previous tasks, current task, and new task (submission = new line)
-      console.log("Task list updated. New taskList: ");
-      let test = [
-        ...prevTasks.slice(0, i + 1),
-        { key: createRandomKey() },
-        ...prevTasks.slice(i + 1),
-      ];
-      test.map((entry) => console.log(entry));
-      return test;
-      //   return [...(prevTasks.slice(1,)), taskData, {key: createRandomKey()}]; // TODO
+      // Return list with previous tasks, current task, and new task
+      //   console.log("Task list updated. New taskList: ");
+      prevTasks.splice(i + 1, 0, { key: createRandomKey() });
+      return [...prevTasks]; // TODO: inefficient. Better way to make sure refresh occurs?
     });
   };
 
@@ -34,12 +40,8 @@ const List = () => {
     if (tasks.length > 1) {
       setTasks((prevTasks) => {
         const i = prevTasks.findIndex((task) => task.key === keyToDelete);
-        console.log('Pre-deletion:')
-        console.log(prevTasks)
-        const sol = [...prevTasks.slice(0,i), ...prevTasks.slice(i + 1)] // Terrible, but we need new object to force React to re-render List
-        console.log('Post-deletion:')
-        console.log(sol)
-        return sol;
+        prevTasks.splice(i,1)
+        return [...prevTasks]; // Terrible efficiency, but we need new object to force React to re-render List
       });
     }
   };
@@ -48,10 +50,11 @@ const List = () => {
   // TODO: Buggy. Seems to render backwards? Why is a new input being created?
   return tasks.map((task) => (
     <ul key={task.key}>
-      {console.log("List passed " + task.title)}
+      {/* {console.log("List passed " + task.title)} */}
       <TaskItem
         id={task.key}
         title={task.title}
+        onClickOut={updateTitle}
         onCreateNewTaskItem={createNewTaskItem}
         onConditionalDelete={conditionalTaskDelete}
       />
