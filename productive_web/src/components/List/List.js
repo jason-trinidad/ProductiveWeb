@@ -3,22 +3,14 @@ import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 import TaskItem from "./TaskItem";
 
+// Known bugs:
+// 1. When new active input is dropped at top of list, "carriage return" pushes that input to 2nd
+// 2. Drop is a bit ratchety (e.g. overlap on other element and there's a pause/lower element is moved). Why?
+
 const List = () => {
   // Helpers
   const createRandomKey = () => Math.random().toString();
-  const d = new Date();
   const [nextDragId, setNextDragId] = useState(1);
-
-  //   const createNewTask = () => {
-  //     const newTask = {
-  //         key: createRandomKey(),
-  //         draggableId: lastDraggableId.toString(),
-  //     }
-
-  //     setLastDraggableId((prev) => prev + 1) // Updating after in case of async update
-  //     console.log(lastDraggableId)
-  //     return newTask
-  //   }
 
   // Initialize list of tasks to empty task
   const [tasks, setTasks] = useState([
@@ -26,7 +18,7 @@ const List = () => {
       key: createRandomKey(),
       dragId: 0,
     },
-  ]); // Key included for warning. TODO: fix hack
+  ]); // TODO: consolidate new task creation. In a hook?
 
   // Updates task title for a given key. Returns the TaskItem's index in the List.
   const updateTitle = (taskData) => {
@@ -57,7 +49,7 @@ const List = () => {
       return [...prevTasks]; // TODO: inefficient. Better way to make sure refresh occurs?
     });
 
-    setNextDragId((prev) => prev + 1)
+    setNextDragId((prev) => prev + 1);
   };
 
   // Delete a task from the list if not the sole remaining task
@@ -87,7 +79,7 @@ const List = () => {
     <>
       <h2>List</h2>
       <DragDropContext onDragEnd={dragEndHandler}>
-        <Droppable droppableId="drop-list">
+        <Droppable droppableId="list">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps}>
               {tasks.map((task, index) => (
