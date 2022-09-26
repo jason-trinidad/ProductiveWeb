@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 import TaskItem from "./TaskItem";
 
@@ -45,21 +46,42 @@ const List = () => {
     }
   };
 
-  // List items shown dynamically
+  const dragEndHandler = (result) => {
+    if (!result.destination) return;
+    const { source, destination } = result;
+
+    // Update task list
+    setTasks((prevTasks) => {
+      const [removed] = prevTasks.splice(source.index, 1);
+      prevTasks.splice(destination.index, 0, removed);
+      return [...prevTasks];
+    });
+  };
+
   return (
     <>
       <h2>List</h2>
-      {tasks.map((task) => (
-        <ul key={task.key}>
-          <TaskItem
-            id={task.key}
-            title={task.title}
-            onClickOut={updateTitle}
-            onCreateNewTaskItem={createNewTaskItem}
-            onConditionalDelete={conditionalTaskDelete}
-          />
-        </ul>
-      ))}
+      <DragDropContext onDragEnd={dragEndHandler}>
+        <Droppable droppableId="drop-list">
+          {(provided) => (
+            <div ref={provided.innerRef} {...provided.droppableProps}>
+              {tasks.map((task, index) => (
+                <ul key={task.key}>
+                  <TaskItem
+                    id={task.key}
+                    draggableId={index}
+                    title={task.title}
+                    onClickOut={updateTitle}
+                    onCreateNewTaskItem={createNewTaskItem}
+                    onConditionalDelete={conditionalTaskDelete}
+                  />
+                </ul>
+              ))}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
     </>
   );
 };

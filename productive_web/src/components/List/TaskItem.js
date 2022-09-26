@@ -1,18 +1,21 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Draggable } from "react-beautiful-dnd";
 
 import styles from "./TaskItem.module.css";
 
 // TODO - add:
 // Edit √
 // Delete √
-// Style
+// Style [first pass] √
 // Drag and drop
+// Weekly calendar
 // Indents
 // Do at
 // Deadline
 // Undo?
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
+// Input on short click, drag/drop on long clicks
 
 const TaskItemForm = (props) => {
   const [enteredTitle, setEnteredTitle] = useState("");
@@ -74,24 +77,31 @@ const TaskItemForm = (props) => {
     renderTitle = props.title;
   }
 
-  //   console.log(soonDeleted);
-
   return (
-    // Should each of these be a separate form? Or should I do multiple inputs for one form?
-    <form onSubmit={submitHandler}>
-      {/* {console.log("TaskItem returned " + renderTitle)} */}
-      <input
-        className={styles.TaskItem}
-        autoFocus
-        ref={ref}
-        type="text"
-        value={renderTitle}
-        onFocus={() => setInFocus(() => true)}
-        onBlur={blurHandler}
-        onChange={titleChangeHandler}
-        onKeyDown={keyShortsHandler}
-      />
-    </form>
+    <Draggable draggableId={(props.draggableId).toString()} index={props.draggableId}>
+      {(provided) => (
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+        >
+          {/* Should each of these be a separate form? Or should I do multiple inputs for one form? */}
+          <form onSubmit={submitHandler}>
+            <input
+              className={styles.TaskItem}
+              autoFocus
+              ref={ref}
+              type="text"
+              value={renderTitle}
+              onFocus={() => setInFocus(() => true)}
+              onBlur={blurHandler}
+              onChange={titleChangeHandler}
+              onKeyDown={keyShortsHandler}
+            />
+          </form>
+        </div>
+      )}
+    </Draggable>
   );
 };
 

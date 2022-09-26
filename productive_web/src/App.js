@@ -1,11 +1,11 @@
-import React from 'react'
-import './App.css';
-import List from './components/List/List'
+import React from "react";
+
+import "./App.css";
+
+import List from "./components/List/List";
 
 function App() {
-  return (
-    <List />
-  );
+  return <List />;
 }
 
 export default App;
