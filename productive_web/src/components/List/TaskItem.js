@@ -11,7 +11,7 @@ import styles from "./TaskItem.module.css";
 // Do at
 // Deadline
 // Undo?
-// Focus on previous element on delete
+// Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
 
 const TaskItemForm = (props) => {
@@ -73,6 +73,8 @@ const TaskItemForm = (props) => {
   } else {
     renderTitle = props.title;
   }
+
+  //   console.log(soonDeleted);
 
   return (
     // Should each of these be a separate form? Or should I do multiple inputs for one form?
