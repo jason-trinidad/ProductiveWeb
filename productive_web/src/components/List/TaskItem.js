@@ -78,7 +78,7 @@ const TaskItemForm = (props) => {
   }
 
   return (
-    <Draggable draggableId={(props.draggableId).toString()} index={props.draggableId}>
+    <Draggable draggableId={(props.draggableId).toString()} index={props.index}>
       {(provided) => (
         <div
           ref={provided.innerRef}

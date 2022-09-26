@@ -6,9 +6,27 @@ import TaskItem from "./TaskItem";
 const List = () => {
   // Helpers
   const createRandomKey = () => Math.random().toString();
+  const d = new Date();
+  const [nextDragId, setNextDragId] = useState(1);
+
+  //   const createNewTask = () => {
+  //     const newTask = {
+  //         key: createRandomKey(),
+  //         draggableId: lastDraggableId.toString(),
+  //     }
+
+  //     setLastDraggableId((prev) => prev + 1) // Updating after in case of async update
+  //     console.log(lastDraggableId)
+  //     return newTask
+  //   }
 
   // Initialize list of tasks to empty task
-  const [tasks, setTasks] = useState([{ key: createRandomKey() }]); // Key included for warning. TODO: fix hack
+  const [tasks, setTasks] = useState([
+    {
+      key: createRandomKey(),
+      dragId: 0,
+    },
+  ]); // Key included for warning. TODO: fix hack
 
   // Updates task title for a given key. Returns the TaskItem's index in the List.
   const updateTitle = (taskData) => {
@@ -25,14 +43,21 @@ const List = () => {
 
   // Add submitted task to list, create new task
   const createNewTaskItem = (taskData) => {
+    const newId = nextDragId;
+
     setTasks((prevTasks) => {
       // Store edited task's title
       const i = updateTitle(taskData);
 
       // Return list with previous tasks, current task, and new task
-      prevTasks.splice(i + 1, 0, { key: createRandomKey() });
+      prevTasks.splice(i + 1, 0, {
+        key: createRandomKey(),
+        dragId: newId,
+      });
       return [...prevTasks]; // TODO: inefficient. Better way to make sure refresh occurs?
     });
+
+    setNextDragId((prev) => prev + 1)
   };
 
   // Delete a task from the list if not the sole remaining task
@@ -69,7 +94,8 @@ const List = () => {
                 <ul key={task.key}>
                   <TaskItem
                     id={task.key}
-                    draggableId={index}
+                    draggableId={task.dragId}
+                    index={index}
                     title={task.title}
                     onClickOut={updateTitle}
                     onCreateNewTaskItem={createNewTaskItem}
