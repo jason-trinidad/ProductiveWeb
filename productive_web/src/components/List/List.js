@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 
 import TaskItem from "./TaskItem";
+import firestore from "../../db";
+import { addDoc, collection } from "firebase/firestore";
 
 // Known bugs:
 // 1. When new active input is dropped at top of list, "carriage return" pushes that input to 2nd
@@ -33,6 +35,17 @@ const List = () => {
     return i;
   };
 
+  // Trying out firebase
+  const ref = collection(firestore, "Tasks");
+
+  const saveTask = async (newTask) => {
+    try {
+        addDoc(ref, newTask);
+    } catch (newTask) {
+        console.log('Error saving');
+    }
+  };
+
   // Add submitted task to list, create new task
   const createNewTaskItem = (taskData) => {
     const newId = nextDragId;
@@ -49,6 +62,7 @@ const List = () => {
       return [...prevTasks]; // TODO: inefficient. Better way to make sure refresh occurs?
     });
 
+    saveTask(taskData);
     setNextDragId((prev) => prev + 1);
   };
 
