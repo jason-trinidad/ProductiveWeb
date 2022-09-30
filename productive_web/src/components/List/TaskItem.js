@@ -2,12 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import styles from "./TaskItem.module.css";
+import { tasksActions } from "../../store/tasks-slice";
+import { useDispatch } from "react-redux";
 
 // TODO - add:
 // Edit √
 // Delete √
 // Style [first pass] √
-// Drag and drop
+// Drag and drop √
+// Back-end [Firebase]
+// Done button/styling
 // Weekly calendar
 // Indents
 // Do at
@@ -19,63 +23,33 @@ import styles from "./TaskItem.module.css";
 
 const TaskItemForm = (props) => {
   const [enteredTitle, setEnteredTitle] = useState("");
-  const [inFocus, setInFocus] = useState(false);
   const ref = useRef();
-
-  // Handling focus edge cases. https://exogen.github.io/blog/focus-state/
-  useEffect(() => {
-    if (document.hasFocus() && ref.current.contains(document.activeElement)) {
-      setInFocus(() => true);
-    }
-  }, []);
+  const dispatch = useDispatch();
 
   // Handle keyboard shortcuts
   const keyShortsHandler = (event) => {
     // "Backspace delete" TaskItem from List
     if (event.key === "Backspace" && event.target.value === "") {
-      props.onConditionalDelete(props.id);
+        // dispatch(tasksActions.delete({keyToDelete: props.id}));
+        props.onConditionalDelete(props.id); // To allow List to handle list length
     }
   };
 
+  // Handle typing internally
   const titleChangeHandler = (event) => {
     setEnteredTitle(event.target.value);
   };
 
-  // Addresses delete title, click away, title reappears bug
+  // Saves internal title state to store
   const blurHandler = () => {
-    setInFocus(() => false);
-
-    // Package data
-    const taskData = {
-      key: props.id,
-      title: enteredTitle,
-    };
-
-    props.onClickOut(taskData);
+    dispatch(tasksActions.update({ key: props.id, title: enteredTitle }));
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
-
-    // console.log("Form submitted");
-
-    // JSON format may be better going forward
-    const taskData = {
-      key: props.id,
-      title: enteredTitle,
-    };
-
     // "Carriage return"
-    props.onCreateNewTaskItem(taskData);
+    props.onCarriageReturn({ key: props.id, title: enteredTitle });
   };
-
-  // If in focus or new form, render enteredTitle. Otherwise, render props from list
-  let renderTitle;
-  if (inFocus || !props.title) {
-    renderTitle = enteredTitle;
-  } else {
-    renderTitle = props.title;
-  }
 
   return (
     <Draggable draggableId={(props.draggableId).toString()} index={props.index}>
@@ -92,8 +66,6 @@ const TaskItemForm = (props) => {
               autoFocus
               ref={ref}
               type="text"
-              value={renderTitle}
-              onFocus={() => setInFocus(() => true)}
               onBlur={blurHandler}
               onChange={titleChangeHandler}
               onKeyDown={keyShortsHandler}

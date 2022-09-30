@@ -1,92 +1,58 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
-
-import TaskItem from "./TaskItem";
+import { useDispatch, useSelector } from "react-redux";
 import firestore from "../../db";
 import { addDoc, collection } from "firebase/firestore";
 
+import TaskItem from "./TaskItem";
+import { tasksActions } from "../../store/tasks-slice";
+
 // Known bugs:
-// 1. When new active input is dropped at top of list, "carriage return" pushes that input to 2nd
-// 2. Drop is a bit ratchety (e.g. overlap on other element and there's a pause/lower element is moved). Why?
+// 1. Drop is a bit ratchety (e.g. overlap on other element and there's a pause/lower element is moved).
+//       [I think this is due to some padding list items have that placeholder does not.]
 
 const List = () => {
-  // Helpers
-  const createRandomKey = () => Math.random().toString();
   const [nextDragId, setNextDragId] = useState(1);
-
-  // Initialize list of tasks to empty task
-  const [tasks, setTasks] = useState([
-    {
-      key: createRandomKey(),
-      dragId: 0,
-    },
-  ]); // TODO: consolidate new task creation. In a hook?
-
-  // Updates task title for a given key. Returns the TaskItem's index in the List.
-  const updateTitle = (taskData) => {
-    let i;
-    setTasks((prevTasks) => {
-      // Store edited task's title
-      i = prevTasks.findIndex((task) => task.key === taskData.key); // Better with find()?
-      prevTasks[i].title = taskData.title;
-      return [...prevTasks];
-    });
-
-    return i;
-  };
+  const dispatch = useDispatch();
+  const taskList = useSelector((state) => state.tasks);
 
   // Trying out firebase
   const ref = collection(firestore, "Tasks");
 
-  const saveTask = async (newTask) => {
+  const createTaskInDB = async (newTask) => {
     try {
-        addDoc(ref, newTask);
+      addDoc(ref, newTask);
     } catch (newTask) {
-        console.log('Error saving');
+      console.log("Error saving");
     }
   };
 
   // Add submitted task to list, create new task
-  const createNewTaskItem = (taskData) => {
-    const newId = nextDragId;
+  const carriageReturn = (taskData) => {
 
-    setTasks((prevTasks) => {
-      // Store edited task's title
-      const i = updateTitle(taskData);
+    const mixedData = {
+      ...taskData,
+      dragId: nextDragId,
+    };
 
-      // Return list with previous tasks, current task, and new task
-      prevTasks.splice(i + 1, 0, {
-        key: createRandomKey(),
-        dragId: newId,
-      });
-      return [...prevTasks]; // TODO: inefficient. Better way to make sure refresh occurs?
-    });
+    // Update store with title of current TaskItem, then create a new one
+    dispatch(tasksActions.update(taskData));
+    dispatch(tasksActions.carriageReturn(mixedData));
 
-    saveTask(taskData);
     setNextDragId((prev) => prev + 1);
   };
 
+  // BUG: Deleting random shiz
   // Delete a task from the list if not the sole remaining task
   const conditionalTaskDelete = (keyToDelete) => {
-    if (tasks.length > 1) {
-      setTasks((prevTasks) => {
-        const i = prevTasks.findIndex((task) => task.key === keyToDelete);
-        prevTasks.splice(i, 1);
-        return [...prevTasks]; // Terrible efficiency, but we need new object to force React to re-render List
-      });
+    if (taskList.length > 1) {
+      dispatch(tasksActions.delete({ keyToDelete }));
     }
   };
 
   const dragEndHandler = (result) => {
-    if (!result.destination) return;
-    const { source, destination } = result;
-
-    // Update task list
-    setTasks((prevTasks) => {
-      const [removed] = prevTasks.splice(source.index, 1);
-      prevTasks.splice(destination.index, 0, removed);
-      return [...prevTasks];
-    });
+    if (!result.destination) return; // TODO: would bang-less syntax work?
+    dispatch(tasksActions.reorder(result));
   };
 
   return (
@@ -96,15 +62,14 @@ const List = () => {
         <Droppable droppableId="list">
           {(provided) => (
             <div ref={provided.innerRef} {...provided.droppableProps}>
-              {tasks.map((task, index) => (
+              {taskList.map((task, index) => (
                 <ul key={task.key}>
                   <TaskItem
                     id={task.key}
                     draggableId={task.dragId}
                     index={index}
                     title={task.title}
-                    onClickOut={updateTitle}
-                    onCreateNewTaskItem={createNewTaskItem}
+                    onCarriageReturn={carriageReturn}
                     onConditionalDelete={conditionalTaskDelete}
                   />
                 </ul>
