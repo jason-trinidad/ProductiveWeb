@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { useDispatch, useSelector } from "react-redux";
-import firestore from "../../db";
+import db from "../../db";
 import { addDoc, collection } from "firebase/firestore";
 
 import TaskItem from "./TaskItem";
@@ -17,12 +17,12 @@ const List = () => {
   const taskList = useSelector((state) => state.tasks);
 
   // Trying out firebase
-  const ref = collection(firestore, "Tasks");
+  const ref = collection(db, "Tasks");
 
   const createTaskInDB = async (newTask) => {
     try {
       addDoc(ref, newTask);
-    } catch (newTask) {
+    } catch (error) {
       console.log("Error saving");
     }
   };
@@ -40,9 +40,10 @@ const List = () => {
     dispatch(tasksActions.carriageReturn(mixedData));
 
     setNextDragId((prev) => prev + 1);
+    // const listIndex = taskList.findIndex((task) => task.key === taskData.key);
+    // createTaskInDB({ ...taskData, listIndex });
   };
 
-  // BUG: Deleting random shiz
   // Delete a task from the list if not the sole remaining task
   const conditionalTaskDelete = (keyToDelete) => {
     if (taskList.length > 1) {

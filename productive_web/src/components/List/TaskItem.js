@@ -5,22 +5,6 @@ import styles from "./TaskItem.module.css";
 import { tasksActions } from "../../store/tasks-slice";
 import { useDispatch } from "react-redux";
 
-// TODO - add:
-// Edit √
-// Delete √
-// Style [first pass] √
-// Drag and drop √
-// Back-end [Firebase]
-// Done button/styling
-// Weekly calendar
-// Indents
-// Do at
-// Deadline
-// Undo?
-// Focus on previous element on delete (maybe convert to class component?)
-// Keyboard shortcuts
-// Input on short click, drag/drop on long clicks
-
 const TaskItemForm = (props) => {
   const [enteredTitle, setEnteredTitle] = useState("");
   const ref = useRef();
@@ -31,7 +15,7 @@ const TaskItemForm = (props) => {
     // "Backspace delete" TaskItem from List
     if (event.key === "Backspace" && event.target.value === "") {
         // dispatch(tasksActions.delete({keyToDelete: props.id}));
-        props.onConditionalDelete(props.id); // To allow List to handle list length
+        props.onConditionalDelete(props.id); // Using callback to allow List to handle list length
     }
   };
 

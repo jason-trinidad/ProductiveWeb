@@ -44,7 +44,13 @@ const tasksSlice = createSlice({
     reorder(state, action) {
       const [removed] = state.splice(action.payload.source.index, 1);
       state.splice(action.payload.destination.index, 0, removed);
-    }
+    },
+    // TODO: try out with new method for save data
+    populate(state, action) {
+      const taskList = [];
+      action.payload.map((task) => taskList.push(task));
+      state = taskList;
+    },
   },
 });
 
