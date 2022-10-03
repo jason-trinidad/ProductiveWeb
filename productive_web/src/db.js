@@ -43,14 +43,14 @@ export const saveTasksToDB = (tasks) => {
       const allDocs = await getDocs(query(tasksRef));
       if (!allDocs.empty) {
         // console.log('Delete triggered')
-        console.log('Attempting to delete:')
+        // console.log('Attempting to delete:')
         allDocs.forEach((doc) => {
             // console.log(doc.data())
             deleteDoc(doc.ref)
         });
       }
 
-    console.log('Attempting to save:')
+    // console.log('Attempting to save:')
     tasks.map((task, index) => {
       try {
         // console.log({...task, listIndex: index})

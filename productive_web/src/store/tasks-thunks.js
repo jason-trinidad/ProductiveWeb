@@ -3,18 +3,18 @@ import {
   collection,
   query,
   orderBy,
-  where,
 } from "firebase/firestore";
 
 import db from "../db";
 import { tasksActions } from "./tasks-slice";
 
+// BUGGY: currently does not update correctly. Possibly due to missing form value? But only one TaskItem created...
 // From DB
 export const fetchTasksFromDb = () => {
   return async (dispatch) => {
     const fetchData = async () => {
       const tasksRef = collection(db, "Tasks"); // Reference to the collection
-      const q = query(tasksRef, where("listIndex", ">", -1), orderBy("listIndex")); // Create query
+      const q = query(tasksRef, orderBy("listIndex")); // Create query
 
       let dbTasks;
       try {
