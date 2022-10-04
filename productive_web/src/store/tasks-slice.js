@@ -2,9 +2,9 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const createRandomKey = () => Math.random().toString();
 
-const createNewTask = (dragId = 0, title = "") => ({
+const createNewTask = (title = "") => ({
   key: createRandomKey(), //TODO: consider. id from db entry, or keep internal keys?
-  dragId: dragId,
+  dragId: createRandomKey(),
   title: title,
   doOn: null,
   deadline: null,
@@ -18,7 +18,7 @@ const createNewTask = (dragId = 0, title = "") => ({
 
 const tasksSlice = createSlice({
   name: "tasks",
-  initialState: [createNewTask()],
+  initialState: [],
   reducers: {
     carriageReturn(state, action) {
       // Add new task after current
@@ -45,11 +45,8 @@ const tasksSlice = createSlice({
       const [removed] = state.splice(action.payload.source.index, 1);
       state.splice(action.payload.destination.index, 0, removed);
     },
-    // TODO: try out with new method for save data
-    populate(state, action) {
-      const taskList = [];
-      action.payload.map((task) => taskList.push(task));
-      state = taskList;
+    append(state, action) {
+      state.push(action.payload);
     },
   },
 });

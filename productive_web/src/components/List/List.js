@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { DragDropContext, Droppable } from "react-beautiful-dnd";
 import { useDispatch, useSelector } from "react-redux";
-import db from "../../db";
+import { db } from "../../db";
 import { addDoc, collection } from "firebase/firestore";
 
 import TaskItem from "./TaskItem";
@@ -12,9 +12,11 @@ import { tasksActions } from "../../store/tasks-slice";
 //       [I think this is due to some padding list items have that placeholder does not.]
 
 const List = () => {
-  const [nextDragId, setNextDragId] = useState(1);
   const dispatch = useDispatch();
   const taskList = useSelector((state) => state.tasks);
+
+  console.log('List sees taskList:')
+  taskList.map((task) => console.log(task));
 
   // Trying out firebase
   const ref = collection(db, "Tasks");
@@ -29,18 +31,10 @@ const List = () => {
 
   // Add submitted task to list, create new task
   const carriageReturn = (taskData) => {
-
-    const mixedData = {
-      ...taskData,
-      dragId: nextDragId,
-    };
-
-    // Update store with title of current TaskItem, then create a new one
+    // Update store with title of current TaskItem, then create a new one "underneath"
     dispatch(tasksActions.update(taskData));
-    dispatch(tasksActions.carriageReturn(mixedData));
+    dispatch(tasksActions.carriageReturn(taskData));
 
-    setNextDragId((prev) => prev + 1);
-    // const listIndex = taskList.findIndex((task) => task.key === taskData.key);
     // createTaskInDB({ ...taskData, listIndex });
   };
 

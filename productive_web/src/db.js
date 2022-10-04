@@ -31,7 +31,7 @@ const auth = getAuth();
 connectAuthEmulator(auth, "http://localhost:9099");
 
 // DB
-const db = getFirestore();
+export const db = getFirestore();
 connectFirestoreEmulator(db, "localhost", 8080);
 
 // Overwrites existing DB with current state
@@ -67,5 +67,3 @@ export const saveTasksToDB = (tasks) => {
 
   update();
 };
-
-export default db;

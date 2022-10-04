@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { collection, query, orderBy, getDocs } from "firebase/firestore";
 
 import List from "./components/List/List";
-import { fetchTasksFromDb } from "./store/tasks-thunks";
-import { saveTasksToDB } from "./db";
+import { db, saveTasksToDB } from "./db";
+import { tasksActions } from "./store/tasks-slice";
 import "./App.css";
 
 // TODO - add:
@@ -30,16 +31,28 @@ function App() {
   const dispatch = useDispatch();
   const taskList = useSelector((state) => state.tasks);
 
+  const ref = collection(db, "Tasks");
+  const q = query(ref, orderBy("listIndex"));
+
   useEffect(() => {
     if (isInitialRender) {
-      dispatch(fetchTasksFromDb());
+      // Populate state
+      const populate = async () => {
+        try {
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            querySnapshot.docs.map((task) => dispatch(tasksActions.append(task.data())));
+          }
+        } catch (error) {
+          console.log(error)
+        };
+      };
+
+      populate();
       setIsInitialRender(() => false);
       return;
-    }
+    };
 
-    // console.log("Save triggered")
-    // console.log("State: ")
-    // console.log(taskList)
     saveTasksToDB(taskList);
   }, [taskList]);
 

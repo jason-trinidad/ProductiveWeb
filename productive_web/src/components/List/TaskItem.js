@@ -6,7 +6,7 @@ import { tasksActions } from "../../store/tasks-slice";
 import { useDispatch } from "react-redux";
 
 const TaskItemForm = (props) => {
-  const [enteredTitle, setEnteredTitle] = useState("");
+  const [enteredTitle, setEnteredTitle] = useState(props.title);
   const ref = useRef();
   const dispatch = useDispatch();
 
@@ -50,6 +50,7 @@ const TaskItemForm = (props) => {
               autoFocus
               ref={ref}
               type="text"
+              value={enteredTitle}
               onBlur={blurHandler}
               onChange={titleChangeHandler}
               onKeyDown={keyShortsHandler}
