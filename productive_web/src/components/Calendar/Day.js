@@ -7,7 +7,8 @@ import React from 'react';
 const Day = () => {
     return (
         <>
-            {/* Display 12 hours */}
+            {/* Display 24 hours */}
+            {/* How to default to a certain time? */}
             {/* Loop through hours */}
         </>
     )
