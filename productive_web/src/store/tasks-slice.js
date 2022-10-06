@@ -37,17 +37,19 @@ const tasksSlice = createSlice({
     },
     delete(state, action) {
       const i = state.findIndex((task) => task.key === action.payload.keyToDelete);
-      // console.log('Delete found index:' + i)
       state.splice(i, 1);
-      console.log('Deleted: ' + action.payload.keyToDelete)
     },
     reorder(state, action) {
       const [removed] = state.splice(action.payload.source.index, 1);
       state.splice(action.payload.destination.index, 0, removed);
     },
     append(state, action) {
-      state.push(action.payload);
+      state.push(action.payload ? action.payload : createNewTask());
     },
+    toggleDone(state, action) {
+      const i = state.findIndex((task) => task.key === action.payload.toggleKey);
+      state[i].isDone = !state[i].isDone;
+    }
   },
 });
 

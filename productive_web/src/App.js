@@ -12,7 +12,7 @@ import "./App.css";
 // Delete √
 // Style [first pass] √
 // Drag and drop √
-// Back-end [Firebase]
+// Back-end [Firebase] √
 // Done button/styling
 // Weekly calendar
 // Change Firestore I/O to real-time updates
@@ -40,7 +40,9 @@ function App() {
       const populate = async () => {
         try {
           const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
+          if (querySnapshot.empty) {
+            dispatch(tasksActions.append());
+          } else {
             querySnapshot.docs.map((task) => dispatch(tasksActions.append(task.data())));
           }
         } catch (error) {

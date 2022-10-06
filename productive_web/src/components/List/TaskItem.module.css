@@ -1,12 +1,52 @@
-/* .TaskItem {
-    display: 'grid';
-    grid-template-columns: '1fr 8fr'
-} */
-
-.TaskItem {
+.task {
+    display: grid;
+    grid-template-columns: 15% 85%;
+    /* grid-column-gap: 5px; */
+    justify-content: start;
+    align-items: center;
     height: 40px; width: 350px;
-    margin: 0px;
-    font-size: 25px;
+    margin: 4px auto;
+    border-width: .75px;
     border-style: none none groove none;
     outline: solid transparent;
+}
+
+.task input {
+    font-size: 22px;
+    font-weight: 100;
+    font-family: Arial, Helvetica, sans-serif;
+    border-style: none none none none;
+}
+
+.task input:focus {
+    outline: solid transparent;
+    /* border-style: none none none none; */
+}
+
+.task button {
+    justify-self: center;
+    transition-duration: .3s;
+    width: 30px; height: 30px;
+    margin-left: 5px;
+    border-radius: 50%;
+    border-style: solid;
+    border-width: 1.5px;
+    border-color: rgb(234, 28, 28);
+    background-color: transparent;
+}
+
+.completedTask {
+    composes: task;
+    border-color: lightgray;
+}
+
+.completedTask button {
+    border-color: white;
+    width: 25px; height: 25px;
+    background-color: red;
+}
+
+.completedTask input {
+    text-decoration: line-through;
+    color: lightgray;
 }

@@ -3,11 +3,13 @@ import { Draggable } from "react-beautiful-dnd";
 
 import styles from "./TaskItem.module.css";
 import { tasksActions } from "../../store/tasks-slice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const TaskItemForm = (props) => {
-  const [enteredTitle, setEnteredTitle] = useState(props.title);
-  const ref = useRef();
+  const tasks = useSelector((state) => state.tasks);
+  const taskInfo = tasks[props.index];
+
+  const [enteredTitle, setEnteredTitle] = useState(taskInfo.title);
   const dispatch = useDispatch();
 
   // Handle keyboard shortcuts
@@ -35,6 +37,12 @@ const TaskItemForm = (props) => {
     props.onCarriageReturn({ key: props.id, title: enteredTitle });
   };
 
+  const completionHandler = () => {
+    dispatch(tasksActions.toggleDone({ toggleKey: props.id }));
+  }
+
+  console.log('Task status is: ' + taskInfo.isDone);
+
   return (
     <Draggable draggableId={(props.draggableId).toString()} index={props.index}>
       {(provided) => (
@@ -43,19 +51,19 @@ const TaskItemForm = (props) => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          {/* Should each of these be a separate form? Or should I do multiple inputs for one form? */}
-          <form onSubmit={submitHandler}>
-            <input
-              className={styles.TaskItem}
-              autoFocus
-              ref={ref}
-              type="text"
-              value={enteredTitle}
-              onBlur={blurHandler}
-              onChange={titleChangeHandler}
-              onKeyDown={keyShortsHandler}
-            />
-          </form>
+          <div className={taskInfo.isDone ? styles.completedTask : styles.task}>
+            <button onClick={completionHandler}/>
+            <form onSubmit={submitHandler}>
+              <input
+                autoFocus
+                type="text"
+                value={enteredTitle}
+                onBlur={blurHandler}
+                onChange={titleChangeHandler}
+                onKeyDown={keyShortsHandler}
+              />
+            </form>
+          </div>
         </div>
       )}
     </Draggable>

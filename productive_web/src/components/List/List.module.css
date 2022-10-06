@@ -1,0 +1,5 @@
+.list {
+    display: flexbox;
+    flex-direction: column;
+    justify-content: center;
+}
