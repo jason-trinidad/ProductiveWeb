@@ -16,8 +16,8 @@ const TaskItemForm = (props) => {
   const keyShortsHandler = (event) => {
     // "Backspace delete" TaskItem from List
     if (event.key === "Backspace" && event.target.value === "") {
-        // dispatch(tasksActions.delete({keyToDelete: props.id}));
-        props.onConditionalDelete(props.id); // Using callback to allow List to handle list length
+      // dispatch(tasksActions.delete({keyToDelete: props.id}));
+      props.onConditionalDelete(props.id); // Using callback to allow List to handle list length
     }
   };
 
@@ -39,12 +39,10 @@ const TaskItemForm = (props) => {
 
   const completionHandler = () => {
     dispatch(tasksActions.toggleDone({ toggleKey: props.id }));
-  }
-
-  console.log('Task status is: ' + taskInfo.isDone);
+  };
 
   return (
-    <Draggable draggableId={(props.draggableId).toString()} index={props.index}>
+    <Draggable draggableId={props.draggableId.toString()} index={props.index}>
       {(provided) => (
         <div
           ref={provided.innerRef}
@@ -52,7 +50,7 @@ const TaskItemForm = (props) => {
           {...provided.dragHandleProps}
         >
           <div className={taskInfo.isDone ? styles.completedTask : styles.task}>
-            <button onClick={completionHandler}/>
+            <button onClick={completionHandler} />
             <form onSubmit={submitHandler}>
               <input
                 autoFocus

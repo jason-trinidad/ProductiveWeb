@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { DragDropContext } from "react-beautiful-dnd";
 
 import List from "./components/List/List";
 import { db, saveTasksToDB } from "./db";
@@ -13,13 +14,18 @@ import "./App.css";
 // Style [first pass] √
 // Drag and drop √
 // Back-end [Firebase] √
-// Done button/styling
+// Done button/styling √
 // Weekly calendar
-// Change Firestore I/O to real-time updates
 // Auth/users
-// Indents
 // Do at
 // Deadline
+// Team up
+// Streak
+// Repeating events
+// ---------------------------- MVP
+// Change Firestore I/O to real-time updates
+// (If not fixed:) save value of active input before leaving page
+// Indents
 // Undo?
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
@@ -30,6 +36,7 @@ function App() {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const dispatch = useDispatch();
   const taskList = useSelector((state) => state.tasks);
+  const [mouseCoords, setMouseCoords] = useState({});
 
   const ref = collection(db, "Tasks");
   const q = query(ref, orderBy("listIndex"));
@@ -43,22 +50,39 @@ function App() {
           if (querySnapshot.empty) {
             dispatch(tasksActions.append());
           } else {
-            querySnapshot.docs.map((task) => dispatch(tasksActions.append(task.data())));
+            querySnapshot.docs.map((task) =>
+              dispatch(tasksActions.append(task.data()))
+            );
           }
         } catch (error) {
-          console.log(error)
-        };
+          console.log(error);
+        }
       };
 
       populate();
       setIsInitialRender(() => false);
+
+      // Add a listener to aid creating CalendarItem on DnD from List
+      document.addEventListener("mouseup", (event) => {
+        setMouseCoords(() => ({ mouseX: event.pageX, mouseY: event.pageY }))
+      });
       return;
-    };
+    }
 
     saveTasksToDB(taskList);
   }, [taskList]);
 
-  return <List />;
+  const dragEndHandler = (result) => {
+    console.log(mouseCoords);
+    if (!result.destination) return; // TODO: would bang-less syntax work?
+    dispatch(tasksActions.reorder(result));
+  };
+
+  return (
+    <DragDropContext onDragEnd={dragEndHandler}>
+      <List />
+    </DragDropContext>
+  );
 }
 
 export default App;
