@@ -27,7 +27,7 @@ const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
 
 // Auth
-const auth = getAuth();
+export const auth = getAuth();
 connectAuthEmulator(auth, "http://localhost:9099");
 
 // DB
@@ -36,21 +36,23 @@ connectFirestoreEmulator(db, "localhost", 8080);
 
 // Overwrites existing DB with current state
 export const saveTasksToDB = (tasks) => {
-  const tasksRef = collection(db, "Tasks");
+  const user = auth.currentUser;
+  const tasksRef = collection(db, "Users/"+user.uid+"/Tasks");
 
   const update = async () => {
     try {
       const allDocs = await getDocs(query(tasksRef));
       if (!allDocs.empty) {
-        // console.log('Delete triggered')
+        console.log('Delete triggered')
         // console.log('Attempting to delete:')
         allDocs.forEach((doc) => {
-            // console.log(doc.data())
+            console.log(doc.data())
             deleteDoc(doc.ref)
         });
       }
 
     // console.log('Attempting to save:')
+    // console.log(tasks);
     tasks.map((task, index) => {
       try {
         // console.log({...task, listIndex: index})

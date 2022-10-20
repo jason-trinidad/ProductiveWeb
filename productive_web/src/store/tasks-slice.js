@@ -23,17 +23,11 @@ const tasksSlice = createSlice({
     carriageReturn(state, action) {
       // Add new task after current
       const i = state.findIndex((task) => task.key === action.payload.key);
-      // console.log('Slice task data:');
-      // console.log('Key: ' + action.payload.key + ', Title: ' + action.payload.title);
       state.splice(i + 1, 0, createNewTask(action.payload.dragId));
-      // console.log("State after carriage return:");
-      // state.map((task) => console.log('Title: ' + task.title + ', dID: ' + task.dragId));
     },
     update(state, action) {
       state.find((task) => task.key === action.payload.key).title =
         action.payload.title;
-      // console.log("Updated state:");
-      // state.map((task) => console.log('Title: ' + task.title + ', dID: ' + task.dragId));
     },
     delete(state, action) {
       const i = state.findIndex((task) => task.key === action.payload.keyToDelete);
@@ -49,6 +43,9 @@ const tasksSlice = createSlice({
     toggleDone(state, action) {
       const i = state.findIndex((task) => task.key === action.payload.toggleKey);
       state[i].isDone = !state[i].isDone;
+    },
+    clear(state) {
+      state = [];
     }
   },
 });
