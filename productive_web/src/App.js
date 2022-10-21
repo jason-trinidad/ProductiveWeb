@@ -1,23 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  where,
-  documentId,
-} from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { DragDropContext } from "react-beautiful-dnd";
 import {
   signInWithPopup,
   signInAnonymously,
+  onAuthStateChanged,
   GoogleAuthProvider,
   linkWithPopup,
 } from "firebase/auth";
 
+import { addFirstLine } from "./db/db-actions";
 import List from "./components/List/List";
-import { db, auth, saveTasksToDB } from "./db";
+import { db, auth } from "./db/db";
 import { tasksActions } from "./store/tasks-slice";
 import "./App.css";
 
@@ -57,91 +52,38 @@ import "./App.css";
 function App() {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const dispatch = useDispatch();
-  const taskList = useSelector((state) => state.tasks);
+  // const taskList = useSelector((state) => state.tasks);
   const [mouseCoords, setMouseCoords] = useState({});
 
-  const ref = collection(db, "Tasks");
-  const q = query(ref, orderBy("listIndex"));
-
-  // Populate state. TODO: Add as thunk to store
-  const populate = async () => {
-    const user = auth.currentUser
-    const tasksRef = collection(db, "Users/"+user.uid+"/Tasks");
-    const tasksQuery = query(tasksRef, orderBy("listIndex"));
-    try {
-      const querySnapshot = await getDocs(tasksQuery);
-      if (!querySnapshot.empty) {
-        // dispatch(tasksActions.append()); // Adds empty line to state
-      // } else {
-        querySnapshot.docs.map((task) =>
-          dispatch(tasksActions.append(task.data()))
-        );
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
-  const signInWithGoogle = () => {
-    const provider = new GoogleAuthProvider();
-
-    signInWithPopup(auth, provider)
-      .then(async (result) => {
-        // Check if user is in DB. If not, add them, alongside current tasksList state
-        const user = result.user;
-        const usersRef = collection(db, "Users/"+user.uid+"/Tasks");
-        // const userQuery = query(usersRef, where(documentId(), "==", user.uid))
-        try {
-          const querySnapshot = await getDocs(usersRef);
-          console.log("Query snapshot from login: ")
-          querySnapshot.docs.map((doc) => console.log(doc.data()))
-          if (querySnapshot.empty) {
-            console.log("Deleting/saving from signIn.")
-            saveTasksToDB(taskList);
-          } else {
-            console.log("We populating biiiiiih")
-            populate();
-          }
-        } catch (error) {
-          console.log("signInWithGoogle encountered error:");
-          console.log(error);
-        }
-      })
-      .catch((error) => {
-        const errorMessage = error.message;
-        console.log("Google login encountered error:");
-        console.log(errorMessage);
-      });
-  };
-
-  const signOutHandler = () => {
-    auth.signOut();
-    console.log("Signed out.")
-    dispatch(tasksActions.clear())
-    // signInAnon();
-  };
-
   useEffect(() => {
-    if (taskList.length == 0) dispatch(tasksActions.append()); // Adds empty line to state
-
     if (isInitialRender) {
       setIsInitialRender(() => false);
+
+      // // Listen for auth state changes
+      // onAuthStateChanged(auth, (user) => {
+      //   if (user) {
+      //     console.log("Logged in");
+      //   } else {
+      //     signInAnonymously(auth)
+      //       .then(() => {
+      //         addFirstLine();
+      //       })
+      //       .catch((error) => {
+      //         const errorCode = error.code;
+      //         const errorMessage = error.message;
+      //         console.log(errorMessage);
+      //       });
+      //   }
+      // });
 
       // Add a listener to aid creating CalendarItem on DnD from List
       document.addEventListener("mouseup", (event) => {
         setMouseCoords(() => ({ mouseX: event.pageX, mouseY: event.pageY }));
       });
-      
+
       return;
     }
-
-    console.log("Non-initial render sees user as:")
-    console.log(auth.currentUser);
-    if (auth.currentUser) {
-      console.log("App.useEffect is saving taskList");
-      saveTasksToDB(taskList);
-    }
-  }, [taskList]);
+  }, []);
 
   const dragEndHandler = (result) => {
     console.log(mouseCoords);
@@ -153,8 +95,8 @@ function App() {
     <DragDropContext onDragEnd={dragEndHandler}>
       <nav>
         {/* <button onClick={linkGoogle}>"Link account"</button> */}
-        <button onClick={signInWithGoogle}>"Sign in"</button>
-        <button onClick={signOutHandler}>"Log out"</button>
+        {/* <button onClick={signInWithGoogle}>"Sign in"</button>
+        <button onClick={signOutHandler}>"Log out"</button> */}
       </nav>
       <List />
     </DragDropContext>

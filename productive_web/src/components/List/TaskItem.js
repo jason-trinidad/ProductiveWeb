@@ -4,10 +4,11 @@ import { Draggable } from "react-beautiful-dnd";
 import styles from "./TaskItem.module.css";
 import { tasksActions } from "../../store/tasks-slice";
 import { useDispatch, useSelector } from "react-redux";
+import * as dbActions from "../../db/db-actions";
 
-const TaskItemForm = (props) => {
-  const tasks = useSelector((state) => state.tasks);
-  const taskInfo = tasks[props.index];
+const TaskItem = (props) => {
+  // const tasks = useSelector((state) => state.tasks);
+  const taskInfo = props.snapshot.data();
 
   const [enteredTitle, setEnteredTitle] = useState(taskInfo.title);
   const dispatch = useDispatch();
@@ -34,7 +35,8 @@ const TaskItemForm = (props) => {
   const submitHandler = (event) => {
     event.preventDefault();
     // "Carriage return"
-    props.onCarriageReturn({ key: props.id, title: enteredTitle });
+    // props.onCarriageReturn({ key: props.id, title: enteredTitle });
+    dbActions.carriageReturn(props.snapshot, { index: props.index, title: enteredTitle })
   };
 
   const completionHandler = () => {
@@ -68,4 +70,4 @@ const TaskItemForm = (props) => {
   );
 };
 
-export default TaskItemForm;
+export default TaskItem;
