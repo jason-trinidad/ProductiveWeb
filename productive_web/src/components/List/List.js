@@ -21,10 +21,9 @@ const List = () => {
     const q = query(ref, orderBy("listIndex"));
     const unsub = onSnapshot(q, (querySnapshot) => {
       if (querySnapshot.empty) return;
-      console.log("Snapshot sees following tasks in DB:");
-      console.log(querySnapshot.docs);
+      // console.log("Snapshot sees following tasks in DB:");
+      // console.log(querySnapshot.docs);
       setTaskList(() => querySnapshot.docs);
-      console.log("DB listener set local taskList in List.");
     });
     return unsub;
   };
@@ -38,6 +37,7 @@ const List = () => {
         } else {
           signInAnonymously(auth)
             .then(() => {
+              console.log("Adding a line after anon sign-in.")
               addFirstLine();
             })
             .catch((error) => {

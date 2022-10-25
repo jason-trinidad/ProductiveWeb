@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import styles from "./TaskItem.module.css";
-import { tasksActions } from "../../store/tasks-slice";
-import { useDispatch, useSelector } from "react-redux";
 import * as dbActions from "../../db/db-actions";
 
 const TaskItem = (props) => {
@@ -11,7 +9,6 @@ const TaskItem = (props) => {
   const taskInfo = props.snapshot.data();
 
   const [enteredTitle, setEnteredTitle] = useState(taskInfo.title);
-  const dispatch = useDispatch();
 
   // Handle keyboard shortcuts
   const keyShortsHandler = (event) => {

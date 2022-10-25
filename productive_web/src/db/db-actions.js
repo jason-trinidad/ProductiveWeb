@@ -1,4 +1,3 @@
-import React from "react";
 import { auth, db } from "./db";
 import {
   setDoc,
@@ -10,6 +9,7 @@ import {
   getDocs,
   updateDoc,
   deleteDoc,
+  addDoc,
 } from "firebase/firestore";
 
 const createRandomKey = () => Math.random().toString();
@@ -30,11 +30,13 @@ const createNewTask = (title = "", listIndex = 0) => ({
   isArchived: false,
 });
 
-const getAllTasks = async () => {
-  const user = auth.currentUser;
+const getAllTasks = async (user = auth.currentUser) => {
   const taskStore = "Users/" + user.uid + "/Tasks";
   const tasksQuery = query(collection(db, taskStore), orderBy("listIndex"));
   const tasks = await getDocs(tasksQuery);
+
+//   console.log("getAllTasks found these tasks:")
+//   tasks.docs.map((task) => console.log(task.data()))
 
   return { taskStore, tasks };
 };
@@ -55,8 +57,6 @@ export const addFirstLine = async () => {
 // TODO: using batch for offline capability. Better to use transaction?
 export const carriageReturn = async (prevDoc, prevTaskData) => {
   const { taskStore, tasks } = await getAllTasks();
-  console.log("carriageReturn sees tasks:");
-  console.log(tasks);
 
   // Save prevTask's title
   const batch = writeBatch(db);
@@ -79,22 +79,14 @@ export const update = (doc, title) => {
   updateDoc(doc.ref, { title: title });
 };
 
+// TODO: check if last item in collection! Rn someone could hold delete on first/only line and cause a bunch of pings
 export const remove = (doc) => {
   deleteDoc(doc.ref);
 };
 
 // TODO: transaction?
 export const reorder = async (dragId, source, destination) => {
-  const { tasks } = await getAllTasks(); // TODO: cleaner syntax?
-  console.log(
-    "Type of source: " +
-      typeof source +
-      ", Type of destination: " +
-      typeof destination
-  );
-  console.log("Source: " + source + ", Destination: " + destination);
-  const test = source > destination;
-  console.log(test);
+  const { tasks } = await getAllTasks();
 
   // Set range of the list indices to be changed, as well how they'll be changed
   const start = destination > source ? source : destination;
@@ -123,3 +115,14 @@ export const reorder = async (dragId, source, destination) => {
 export const toggleDone = (doc) => {
   updateDoc(doc.ref, { isDone: !doc.data().isDone });
 };
+
+export const migrate = async (prevUser, currUser) => {
+    // Get previous user's data
+    const { tasks } = await getAllTasks(prevUser);
+
+    // Add those tasks to the new user
+    const newRef = "Users/" + currUser.uid + "/Tasks";
+    tasks.docs.map(async (task) => await addDoc(collection(db, newRef), task.data()))
+
+    // Delete old user. TODO: implement as cloud function
+}
