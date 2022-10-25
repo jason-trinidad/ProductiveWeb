@@ -1,19 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { DragDropContext } from "react-beautiful-dnd";
-import {
-  signInWithPopup,
-  signInAnonymously,
-  onAuthStateChanged,
-  GoogleAuthProvider,
-  linkWithPopup,
-} from "firebase/auth";
 
-import { addFirstLine } from "./db/db-actions";
+import { reorder } from "./db/db-actions";
 import List from "./components/List/List";
-import { db, auth } from "./db/db";
-import { tasksActions } from "./store/tasks-slice";
+import { auth } from "./db/db";
 import "./App.css";
 
 // TODO - add:
@@ -51,30 +41,11 @@ import "./App.css";
 
 function App() {
   const [isInitialRender, setIsInitialRender] = useState(true);
-  const dispatch = useDispatch();
-  // const taskList = useSelector((state) => state.tasks);
   const [mouseCoords, setMouseCoords] = useState({});
 
   useEffect(() => {
     if (isInitialRender) {
       setIsInitialRender(() => false);
-
-      // // Listen for auth state changes
-      // onAuthStateChanged(auth, (user) => {
-      //   if (user) {
-      //     console.log("Logged in");
-      //   } else {
-      //     signInAnonymously(auth)
-      //       .then(() => {
-      //         addFirstLine();
-      //       })
-      //       .catch((error) => {
-      //         const errorCode = error.code;
-      //         const errorMessage = error.message;
-      //         console.log(errorMessage);
-      //       });
-      //   }
-      // });
 
       // Add a listener to aid creating CalendarItem on DnD from List
       document.addEventListener("mouseup", (event) => {
@@ -88,15 +59,16 @@ function App() {
   const dragEndHandler = (result) => {
     console.log(mouseCoords);
     if (!result.destination) return; // TODO: would bang-less syntax work?
-    dispatch(tasksActions.reorder(result));
+    console.log(result)
+    reorder(result.draggableId, result.source.index, result.destination.index);
   };
 
   return (
     <DragDropContext onDragEnd={dragEndHandler}>
       <nav>
         {/* <button onClick={linkGoogle}>"Link account"</button> */}
-        {/* <button onClick={signInWithGoogle}>"Sign in"</button>
-        <button onClick={signOutHandler}>"Log out"</button> */}
+        {/* <button onClick={signInWithGoogle}>"Sign in"</button> */}
+        <button onClick={() => auth.signOut()}>"Log out"</button>
       </nav>
       <List />
     </DragDropContext>

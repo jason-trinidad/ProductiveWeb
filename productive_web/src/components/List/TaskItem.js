@@ -17,8 +17,7 @@ const TaskItem = (props) => {
   const keyShortsHandler = (event) => {
     // "Backspace delete" TaskItem from List
     if (event.key === "Backspace" && event.target.value === "") {
-      // dispatch(tasksActions.delete({keyToDelete: props.id}));
-      props.onConditionalDelete(props.id); // Using callback to allow List to handle list length
+      dbActions.remove(props.snapshot);
     }
   };
 
@@ -29,18 +28,18 @@ const TaskItem = (props) => {
 
   // Saves internal title state to store
   const blurHandler = () => {
-    dispatch(tasksActions.update({ key: props.id, title: enteredTitle }));
+    dbActions.update(props.snapshot, enteredTitle);
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
-    // "Carriage return"
-    // props.onCarriageReturn({ key: props.id, title: enteredTitle });
+    
     dbActions.carriageReturn(props.snapshot, { index: props.index, title: enteredTitle })
   };
 
   const completionHandler = () => {
-    dispatch(tasksActions.toggleDone({ toggleKey: props.id }));
+    // dispatch(tasksActions.toggleDone({ toggleKey: props.id }));
+    dbActions.toggleDone(props.snapshot)
   };
 
   return (

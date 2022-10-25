@@ -10,7 +10,6 @@ import {
   addDoc,
   deleteDoc,
 } from "firebase/firestore";
-import { useDispatch } from "react-redux"
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -35,38 +34,38 @@ connectAuthEmulator(auth, "http://localhost:9099");
 export const db = getFirestore();
 connectFirestoreEmulator(db, "localhost", 8080);
 
-// Overwrites existing DB with current state
-export const saveTasksToDB = (tasks) => {
-  const user = auth.currentUser;
-  const tasksRef = collection(db, "Users/"+user.uid+"/Tasks");
+// // Overwrites existing DB with current state
+// export const saveTasksToDB = (tasks) => {
+//   const user = auth.currentUser;
+//   const tasksRef = collection(db, "Users/"+user.uid+"/Tasks");
 
-  const update = async () => {
-    try {
-      const allDocs = await getDocs(query(tasksRef));
-      if (!allDocs.empty) {
-        console.log('Delete triggered')
-        // console.log('Attempting to delete:')
-        allDocs.forEach((doc) => {
-            console.log(doc.data())
-            deleteDoc(doc.ref)
-        });
-      }
+//   const update = async () => {
+//     try {
+//       const allDocs = await getDocs(query(tasksRef));
+//       if (!allDocs.empty) {
+//         console.log('Delete triggered')
+//         // console.log('Attempting to delete:')
+//         allDocs.forEach((doc) => {
+//             console.log(doc.data())
+//             deleteDoc(doc.ref)
+//         });
+//       }
 
-    // console.log('Attempting to save:')
-    // console.log(tasks);
-    tasks.map((task, index) => {
-      try {
-        // console.log({...task, listIndex: index})
-        addDoc(tasksRef, {...task, listIndex: index});
-      } catch (error) {
-        throw new Error('Failed to save new state.')
-      }
-    });
-    } catch (error) {
-      console.log(error);
-      throw new Error('Failed to delete existing.');
-    }
-  };
+//     // console.log('Attempting to save:')
+//     // console.log(tasks);
+//     tasks.map((task, index) => {
+//       try {
+//         // console.log({...task, listIndex: index})
+//         addDoc(tasksRef, {...task, listIndex: index});
+//       } catch (error) {
+//         throw new Error('Failed to save new state.')
+//       }
+//     });
+//     } catch (error) {
+//       console.log(error);
+//       throw new Error('Failed to delete existing.');
+//     }
+//   };
 
-  update();
-};
+//   update();
+// };

@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Droppable } from "react-beautiful-dnd";
-import { useDispatch, useSelector } from "react-redux";
 import { auth, db } from "../../db/db";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
-import { tasksActions } from "../../store/tasks-slice";
 import classes from "./List.module.css";
 import { addFirstLine } from "../../db/db-actions";
 
@@ -15,9 +13,6 @@ import { addFirstLine } from "../../db/db-actions";
 //      I'm not sure why this is.
 
 const List = () => {
-  const dispatch = useDispatch();
-  // const taskList = useSelector((state) => state.tasks);
-  // const [listenerDeployed, setListenerDeployed] = useState(false);
   const [taskList, setTaskList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
 
@@ -46,7 +41,6 @@ const List = () => {
               addFirstLine();
             })
             .catch((error) => {
-              const errorCode = error.code;
               const errorMessage = error.message;
               console.log(errorMessage);
             });
@@ -58,24 +52,9 @@ const List = () => {
     }
   }, []);
 
-  // // Add submitted task to list, create new task
-  // const carriageReturn = (taskData) => {
-    // // Update store with title of current TaskItem, then create a new one "underneath"
-    // dispatch(tasksActions.update(taskData));
-    // dispatch(tasksActions.carriageReturn(taskData));
-  // };
-
-  // Delete a task from the list if not the sole remaining task
-  const conditionalTaskDelete = (keyToDelete) => {
-    if (taskList.length > 1) {
-      dispatch(tasksActions.delete({ keyToDelete }));
-    }
-  };
-
   return (
     <>
       <h2>List</h2>
-      {/* <div className={classes.list}> */}
       <Droppable droppableId="list">
         {(provided) => (
           <div
@@ -91,8 +70,6 @@ const List = () => {
                 draggableId={task.data().dragId}
                 index={index}
                 title={task.data().title}
-                // onCarriageReturn={carriageReturn}
-                onConditionalDelete={conditionalTaskDelete}
               />
             ))}
             {provided.placeholder}
