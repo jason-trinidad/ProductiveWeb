@@ -103,7 +103,7 @@ export const reorder = async (dragId, source, destination) => {
     if (
       task.data().listIndex >= start &&
       task.data().listIndex <= end &&
-      task.data().dragId != dragId
+      task.data().dragId !== dragId
     ) {
       batch.update(task.ref, { listIndex: task.data().listIndex + inc });
     }

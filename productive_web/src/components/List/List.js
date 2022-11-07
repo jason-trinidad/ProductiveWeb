@@ -30,15 +30,14 @@ const List = () => {
 
   useEffect(() => {
     if (isInitialRender) {
-      // Listen for auth state changes
+      // Listen for auth state changes. If not logged in, log in anonymously
       onAuthStateChanged(auth, (user) => {
         if (user) {
           console.log("Logged in");
         } else {
           signInAnonymously(auth)
             .then(() => {
-              console.log("Adding a line after anon sign-in.")
-              addFirstLine();
+              addFirstLine(); // Provide first line for this new user
             })
             .catch((error) => {
               const errorMessage = error.message;
@@ -50,7 +49,7 @@ const List = () => {
 
       setIsInitialRender(() => false);
     }
-  }, []);
+  }, [isInitialRender]);
 
   return (
     <>

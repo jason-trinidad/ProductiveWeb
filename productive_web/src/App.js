@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { DragDropContext } from "react-beautiful-dnd";
-import { signInWithPopup } from "firebase/auth";
 
 import { reorder } from "./db/db-actions";
 import List from "./components/List/List";
+import { MyCalendar } from "./components/MyCalendar/MyCalendar";
 import { auth } from "./db/db";
 import "./App.css";
 import { signInWithGoogle } from "./auth";
@@ -15,13 +15,15 @@ import { signInWithGoogle } from "./auth";
 // Drag and drop √
 // Back-end [Firebase] √
 // Done button/styling √
-// Auth/users [fix newline bug]
-//// On initial log-in, if signed-in, populate √
-//// Otherwise display blank
-//// If Google log-in
-////// If Google log-in exists, populate
-////// Otherwise, create new user using anonymous id and save current state
-// Weekly calendar
+// Auth/users √
+// Deploy √
+// Add weekly calendar
+  // Create calendar template √
+  // Add row of dates
+  // Change to AM/PM times
+  // Change to starting at default time, rest is overflow
+// Drag/drop onto calendar
+  // Alert FiveMin when hovering over
 // Do at
 // Deadline
 // Team up
@@ -30,8 +32,8 @@ import { signInWithGoogle } from "./auth";
 // ---------------------------- MVP
 // Change Firestore I/O to real-time updates (replace Redux?) √
 // Add Outlook
-// Cloud function removing old anons
-// Refactor (e.g. clean up App.js, standardize cases)
+// Cloud function removing old anons ("time-to-live" may do this!)
+// Refactor (e.g. clean up App.js, standardize cases, map() to forEach())
 // Solution for finding team up if no friends (random names? "Make available to team up" option? Matchmaking?)
 // (If not fixed:) save value of active input before leaving page
 // Indents (maybe switch to/extend Atlassian's tree framework for list)
@@ -57,7 +59,7 @@ function App() {
 
       return;
     }
-  }, []);
+  }, [isInitialRender]);
 
   const dragEndHandler = (result) => {
     console.log(mouseCoords);
@@ -71,7 +73,10 @@ function App() {
         <button onClick={signInWithGoogle}>"Sign in"</button>
         <button onClick={() => auth.signOut()}>"Log out"</button>
       </nav>
-      <List />
+      <div className="grid-container">
+        <div className="list"><List /></div>
+        <div className="mycalendar"><MyCalendar /></div>
+      </div>
     </DragDropContext>
   );
 }
