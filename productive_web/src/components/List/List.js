@@ -5,7 +5,7 @@ import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
-import classes from "./List.module.css";
+import "./List.module.css";
 import { addFirstLine } from "../../db/db-actions";
 
 // Known bugs:
@@ -55,9 +55,9 @@ const List = () => {
     <>
       <h2>List</h2>
       <Droppable droppableId="list">
-        {(provided) => (
+        {(provided, snapshot) => (
           <div
-            className={classes.list}
+            className="list"
             ref={provided.innerRef}
             {...provided.droppableProps}
           >

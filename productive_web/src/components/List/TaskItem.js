@@ -35,7 +35,6 @@ const TaskItem = (props) => {
   };
 
   const completionHandler = () => {
-    // dispatch(tasksActions.toggleDone({ toggleKey: props.id }));
     dbActions.toggleDone(props.snapshot)
   };
 

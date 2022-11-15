@@ -1,20 +1,16 @@
 import React from "react";
 
 import "./Day.css"
-import FiveMin from "./FiveMin";
+import Hour from "./Hour";
 
 const Day = () => {
   const startTime = 8.0;
   const endTime = 22.0;
-  const times = new Array();
-  for (let i = startTime; i < endTime; i += 0.05) {
-    //BUG: Weird float error in time values
-    times.push(i);
-  }
+  const times = Array.from({length: endTime - startTime}, (x,i) => startTime + i);
 
   return(
     <div className="day">
-        {times.map((time) => <FiveMin key={time} time={time} />)}
+        {times.map((time) => <Hour key={time} time={time} />)}
     </div>
   )
 };

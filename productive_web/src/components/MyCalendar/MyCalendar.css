@@ -11,6 +11,9 @@
     flex-grow: 1;
 }
 
-.day {
+.datefield {
     flex-grow: 4;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
 }
