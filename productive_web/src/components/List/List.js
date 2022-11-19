@@ -9,7 +9,7 @@ import "./List.module.css";
 import { addFirstLine } from "../../db/db-actions";
 
 // Known bugs:
-// 1. Drop is a bit ratchety (e.g. overlap on other element and there's a pause/lower element is moved).
+// 1. Drop is a bit ratchety (i.e. jolts after a drop).
 //      I'm not sure why this is.
 
 const List = () => {
@@ -21,10 +21,9 @@ const List = () => {
     const q = query(ref, orderBy("listIndex"));
     const unsub = onSnapshot(q, (querySnapshot) => {
       if (querySnapshot.empty) return;
-      // console.log("Snapshot sees following tasks in DB:");
-      // console.log(querySnapshot.docs);
       setTaskList(() => querySnapshot.docs);
     });
+    
     return unsub;
   };
 
@@ -33,18 +32,8 @@ const List = () => {
       // Listen for auth state changes. If not logged in, log in anonymously
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          console.log("Logged in");
-        } else {
-          signInAnonymously(auth)
-            .then(() => {
-              addFirstLine(); // Provide first line for this new user
-            })
-            .catch((error) => {
-              const errorMessage = error.message;
-              console.log(errorMessage);
-            });
+          listen(user);
         }
-        listen(user);
       });
 
       setIsInitialRender(() => false);

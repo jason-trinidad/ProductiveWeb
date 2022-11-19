@@ -1,18 +1,24 @@
 import React from "react";
 
-import "./Day.css"
+import "./Day.css";
 import Hour from "./Hour";
+import * as settings from "./cal-settings";
 
-const Day = () => {
-  const startTime = 8.0;
-  const endTime = 22.0;
-  const times = Array.from({length: endTime - startTime}, (x,i) => startTime + i);
+const Day = (props) => {
+  const times = Array.from(
+    { length: settings.endTime - settings.startTime },
+    (x, i) => settings.startTime + i
+  );
 
-  return(
-    <div className="day">
-        {times.map((time) => <Hour key={time} time={time} />)}
+  return (
+    <div style={{display: "flex", flexDirection: "column", flexGrow: 1}}>
+      <div className="day">
+        {times.map((time) => (
+          <Hour key={time} time={time} />
+        ))}
+      </div>
     </div>
-  )
+  );
 };
 
 export default Day;

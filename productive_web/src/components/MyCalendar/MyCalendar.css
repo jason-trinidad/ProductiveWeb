@@ -3,17 +3,49 @@
     border-style: solid;
     border-color: black;
     height: 100%; width: 100%;
+    display: grid;
+    grid-template-rows: .25fr .5fr 5fr;
+    grid-template-columns: .4fr 5fr .5fr;
+    grid-template-areas: 
+        ". . scroll-buttons"
+        "time-readout date-bar date-bar"
+        "hour-column date-field date-field"
+    ;
+}
+
+.scroll-buttons {
+    grid-area: scroll-buttons;
+    display: flex
+}
+
+.date-bar {
+    grid-area: date-bar;
     display: flex;
-    flex-direction: row;
+    justify-content: space-evenly
 }
 
 .hour-column {
-    flex-grow: 1;
+    grid-area: hour-column;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.datefield {
-    flex-grow: 4;
+.date-field {
+    grid-area: date-field;
     display: flex;
     flex-direction: row;
+    height: 100%; width: 100%;
+}
+
+.time-readout {
+    grid-area: time-readout;
+    color: red;
+}
+
+.time-line {
+    position: absolute;
+    border-bottom: 2px solid;
+    border-bottom-left-radius: 1px;
     width: 100%;
 }

@@ -10,6 +10,7 @@ import {
   updateDoc,
   deleteDoc,
   addDoc,
+  where,
 } from "firebase/firestore";
 
 const createRandomKey = () => Math.random().toString();
@@ -35,23 +36,15 @@ const getAllTasks = async (user = auth.currentUser) => {
   const tasksQuery = query(collection(db, taskStore), orderBy("listIndex"));
   const tasks = await getDocs(tasksQuery);
 
-//   console.log("getAllTasks found these tasks:")
-//   tasks.docs.map((task) => console.log(task.data()))
-
   return { taskStore, tasks };
 };
 
 export const addFirstLine = async () => {
-  //   const { taskStore, tasks } = await getAllTasks();
   const user = auth.currentUser;
   const taskStore = "Users/" + user.uid + "/Tasks";
 
-  //   console.log("addFirstLine shows db tasks:");
-  //   console.log(tasks);
-  //   if (tasks.empty) {
   const newTask = doc(collection(db, taskStore));
   await setDoc(newTask, createNewTask());
-  //   }
 };
 
 // TODO: using batch for offline capability. Better to use transaction?
@@ -88,7 +81,7 @@ export const remove = (doc) => {
 export const reorder = async (dragId, source, destination) => {
   const { tasks } = await getAllTasks();
 
-  // Set range of the list indices to be changed, as well how they'll be changed
+  // Set range of the list indices to be changed, as their direction of change
   const start = destination > source ? source : destination;
   const end = destination > source ? destination : source;
   const inc = start === source ? -1 : 1;
@@ -117,12 +110,25 @@ export const toggleDone = (doc) => {
 };
 
 export const migrate = async (prevUser, currUser) => {
-    // Get previous user's data
-    const { tasks } = await getAllTasks(prevUser);
+  // Get previous user's data
+  const { tasks } = await getAllTasks(prevUser);
 
-    // Add those tasks to the new user
-    const newRef = "Users/" + currUser.uid + "/Tasks";
-    tasks.docs.map(async (task) => await addDoc(collection(db, newRef), task.data()))
+  // Add those tasks to the new user
+  const newRef = "Users/" + currUser.uid + "/Tasks";
+  tasks.docs.map(
+    async (task) => await addDoc(collection(db, newRef), task.data())
+  );
+};
 
-    // Delete old user. TODO: implement as cloud function
-}
+export const schedule = async (dragId, time) => {
+  // Query to find docRef from dragId
+  // TODO: easier way to get this doc ref? Task knows it. List does too (through source.index)
+  const user = auth.currentUser;
+  const taskStore = "Users/" + user.uid + "/Tasks";
+  const q = query(collection(db, taskStore), where("dragId", "==", dragId));
+  const snapshot = await getDocs(q);
+
+  await updateDoc(snapshot.docs[0].ref, {
+    doOn: time,
+  });
+};

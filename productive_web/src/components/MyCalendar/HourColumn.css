@@ -1,9 +1,10 @@
 .column {
     display: flex;
     flex-direction: column;
+    height: 100%;
 }
 
 .hour {
-    flex: 1;
+    flex-grow: 1;
     text-align: right;
 }
