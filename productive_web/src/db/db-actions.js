@@ -12,6 +12,7 @@ import {
   addDoc,
   where,
 } from "firebase/firestore";
+import * as settings from "../components/MyCalendar/cal-settings";
 
 const createRandomKey = () => Math.random().toString();
 
@@ -21,7 +22,8 @@ const createNewTask = (title = "", listIndex = 0) => ({
   dragId: createRandomKey(),
   title: title,
   listIndex: listIndex,
-  scheduledStart: null,
+  startTime: null,
+  endTime: null,
   deadline: null,
   repeat_kind: null,
   repeat_monthly_dates: [],
@@ -120,14 +122,20 @@ export const migrate = async (prevUser, currUser) => {
   );
 };
 
-export const schedule = async (dragId, time) => {
+export const schedule = async (dragId, startTime) => {
   // Query to find docRef from dragId
   const user = auth.currentUser;
   const taskStore = "Users/" + user.uid + "/Tasks";
   const q = query(collection(db, taskStore), where("dragId", "==", dragId));
   const snapshot = await getDocs(q);
 
+  // Calc default end time
+  const endTime = new Date(
+    startTime.getTime() + settings.defaultDuration * 60 * 1000
+  );
+
   await updateDoc(snapshot.docs[0].ref, {
-    scheduledStart: time,
+    startTime: startTime,
+    endTime: endTime,
   });
 };

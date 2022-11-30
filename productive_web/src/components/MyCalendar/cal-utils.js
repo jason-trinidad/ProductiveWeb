@@ -1,6 +1,4 @@
 // Useful calendar functions
-
-import {toDate} from "firebase/firestore"
 import * as settings from "./cal-settings";
 
 export const getDateTime = (mouseCoords, dfOrigin, dfDims, firstDate) => {
@@ -28,13 +26,14 @@ export const getDateTime = (mouseCoords, dfOrigin, dfDims, firstDate) => {
 };
 
 export const getCSSGridRow = (doc) => {
-  // TODO: save event duration to db. Once scheduled, save current default.
-  const scheduledStart = doc.data().scheduledStart.toDate();
+  const eventStartTime = doc.data().startTime.toDate();
+  const eventEndTime = doc.data().endTime.toDate();
 
   const startFrac =
-    (scheduledStart.getHours() - settings.startTime) * 12 +
-    Math.floor(scheduledStart.getMinutes() / 5);
-  const endFrac = startFrac + settings.defaultDuration / 5; // TODO
+    (eventStartTime.getHours() - settings.startTime) * 12 +
+    Math.floor(eventStartTime.getMinutes() / 5);
+  const endFrac = (eventEndTime.getHours() - settings.startTime) * 12 +
+    Math.floor(eventEndTime.getMinutes() / 5);
 
   return `${startFrac} / ${endFrac}`;
 };

@@ -20,28 +20,17 @@ const Day = (props) => {
     );
 
     const ref = collection(db, "Users/" + user.uid + "/Tasks");
-    // const q = query(ref, where("scheduledStart", ">", start));
 
     const q = query(
       ref,
-      where("scheduledStart", ">", start),
-      where("scheduledStart", "<", end)
+      where("startTime", ">", start),
+      where("startTime", "<", end)
     );
 
     const unsub = onSnapshot(q, (querySnapshot) => {
       querySnapshot.empty
         ? setEventList(() => [])
         : setEventList(querySnapshot.docs);
-
-      if (!querySnapshot.empty) {
-        console.log(
-            "Start: " +
-              start.toLocaleDateString("en-US") +
-              " End: " +
-              end.toLocaleDateString("en-US")
-          );
-        querySnapshot.docs.forEach((doc) => console.log(doc.data()));
-      };
     });
 
     return unsub;
@@ -61,7 +50,7 @@ const Day = (props) => {
   }, [isInitialRender]);
 
   const numRows = (settings.endTime - settings.startTime) * 12; // 5 min increments
-  
+
   return (
     <div
       className="day"
@@ -70,8 +59,8 @@ const Day = (props) => {
         gridTemplateColumns: "1fr",
       }}
     >
-      {eventList.map((e, i) => (
-        <Event key={i} e={e} />
+      {eventList.map((docSnap, i) => (
+        <Event key={i} docSnap={docSnap} />
       ))}
     </div>
   );

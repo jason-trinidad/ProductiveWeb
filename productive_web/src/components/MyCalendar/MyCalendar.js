@@ -51,18 +51,13 @@ export const MyCalendar = React.forwardRef((props, ref) => {
 
   const getTimeFromCoords = (e) => {
     const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
-      const dfDims = {
-        x: ref.current.clientWidth,
-        y: ref.current.clientHeight,
-      };
-      const mouseCoords = { x: e.pageX, y: e.pageY };
-      return getDateTime(
-        mouseCoords,
-        dfOrigin,
-        dfDims,
-        displayDates[0]
-      );
-  }
+    const dfDims = {
+      x: ref.current.clientWidth,
+      y: ref.current.clientHeight,
+    };
+    const mouseCoords = { x: e.pageX, y: e.pageY };
+    return getDateTime(mouseCoords, dfOrigin, dfDims, displayDates[0]);
+  };
 
   // Necessary to display time while dragging list item
   const handleMouseOver = (e) => {
@@ -92,16 +87,36 @@ export const MyCalendar = React.forwardRef((props, ref) => {
       });
       setCursorTime(() => newTime);
     }
-  }
+  };
 
+  // TODO: why is drop firing so inconsistent?
   const handleDrop = (e) => {
     e.preventDefault();
-    const newTime = getTimeFromCoords(e);
-    const path = e.dataTransfer.getData("text/plain");
-    
+    const dropTime = getTimeFromCoords(e);
+    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+    let newStart;
+    let newEnd;
+
+    switch (data.obj) {
+      case "event":
+        newStart = dropTime;
+        newEnd = new Date(
+          dropTime.getTime() + (data.endMSecs - data.startMSecs)
+        );
+        break;
+      case "top":
+        newEnd = new Date(data.endMSecs);
+        dropTime.getTime() < newEnd.getTime() ? newStart = dropTime : newStart = new Date(data.startMSecs);
+        break;
+      case "bottom":
+        newStart = new Date(data.startMSecs);
+        dropTime.getTime() > newStart.getTime() ? newEnd = dropTime : newEnd = new Date(data.endMSecs);
+        break;
+    }
+
     // TODO: re-write `schedule` in db-actions to use document path
-    updateDoc(doc(db, path), { scheduledStart: newTime });
-  }
+    updateDoc(doc(db, data.path), { startTime: newStart, endTime: newEnd });
+  };
 
   return (
     <>
