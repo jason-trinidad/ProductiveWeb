@@ -6,5 +6,6 @@
 
 .hour {
     flex-grow: 1;
-    text-align: right;
+    text-align: left;
+    border-bottom: 1px dashed lightcoral;
 }

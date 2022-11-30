@@ -21,7 +21,7 @@ const createNewTask = (title = "", listIndex = 0) => ({
   dragId: createRandomKey(),
   title: title,
   listIndex: listIndex,
-  doOn: null,
+  scheduledStart: null,
   deadline: null,
   repeat_kind: null,
   repeat_monthly_dates: [],
@@ -122,13 +122,12 @@ export const migrate = async (prevUser, currUser) => {
 
 export const schedule = async (dragId, time) => {
   // Query to find docRef from dragId
-  // TODO: easier way to get this doc ref? Task knows it. List does too (through source.index)
   const user = auth.currentUser;
   const taskStore = "Users/" + user.uid + "/Tasks";
   const q = query(collection(db, taskStore), where("dragId", "==", dragId));
   const snapshot = await getDocs(q);
 
   await updateDoc(snapshot.docs[0].ref, {
-    doOn: time,
+    scheduledStart: time,
   });
 };

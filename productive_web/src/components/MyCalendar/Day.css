@@ -1,7 +1,6 @@
 .day {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    /* margin: 4px; */
-    border: 2px solid gainsboro;
+    flex: 1 1 0;
+    display: grid;
+    border: 3px solid gainsboro;
+    margin-left: -3px;
 }

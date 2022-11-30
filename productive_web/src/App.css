@@ -1,16 +1,39 @@
 .grid-container {
   display: grid;
+  grid-template-rows: .25fr 1fr 10fr;
   grid-template-columns: 1fr 3fr;
-  grid-template-rows: 1fr;
-  column-gap: 10px;
-  height: 80%; width: 100%;
-}
-
-.list {
-  text-align: center;
-}
-
-.mycalendar {
+  grid-template-areas:
+    "nav nav"
+    "list-title cal-container"
+    "list-container cal-container";
   height: 100%; width: 100%;
+}
+
+.nav {
+  grid-area: nav;
+  display: flex;
+  margin: 0 0 5px 0;
+}
+
+.list-title {
+  grid-area: list-title;
   text-align: center;
+  margin: 0px;
+  align-self: center;
+}
+
+.cal-title {
+  grid-area: cal-title;
+  text-align: center;
+  margin: 0px;
+  align-self: center;
+}
+
+.list-container {
+  text-align: center;
+}
+
+.cal-container {
+  grid-area: cal-container;
+  height: 100%; width: 100%;
 }

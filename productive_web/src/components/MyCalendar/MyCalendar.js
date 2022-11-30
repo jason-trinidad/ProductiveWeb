@@ -1,106 +1,134 @@
 import React, { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
 
-import { auth, db } from "../../db/db";
 import HourColumn from "./HourColumn";
 import Day from "./Day";
 import DateBar from "./DateBar";
 import "./MyCalendar.css";
 import * as settings from "./cal-settings";
-import { getIntendedTime } from "./cal-utils";
+import { getDateTime } from "./cal-utils";
+import { schedule } from "../../db/db-actions";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../db/db";
 
-// TODO: add Redux back in for state?
+// TODO: add Redux back in for view state? (Not data state.)
 
 export const MyCalendar = React.forwardRef((props, ref) => {
-  const [eventList, setEventList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [displayDates, setdisplayDates] = useState([]);
   const [dateLineObj, setDateLineObj] = useState({
     color: "red",
     top: 0,
   });
-  const [cursorTime, setCursorTime] = useState("");
-
-  const listen = (user) => {
-    const ref = collection(db, "Users/" + user.uid + "/Tasks");
-    const q = query(ref, where("doOn", "!=", null));
-
-    const unsub = onSnapshot(q, (querySnapshot) => {
-      if (querySnapshot.empty) return;
-      setEventList(() => querySnapshot.docs);
-    });
-
-    return unsub;
-  };
+  const [cursorTime, setCursorTime] = useState(new Date());
 
   const initialDisplayDates = () => {
     const now = new Date();
-    const days = Array.from({ length: settings.displayDays }, (x, i) => new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      // Day
-      now.getDate() - now.getDay() + settings.firstDisplayDay + i
-    ));
+    const days = Array.from(
+      { length: settings.displayDays },
+      (x, i) =>
+        new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          // Gets week, starting with calendar's setting for first day of week
+          now.getDate() - now.getDay() + settings.firstDisplayDay + i
+        )
+    );
 
-    console.log(days);
-    setdisplayDates(() => days)
+    setdisplayDates(() => days);
   };
 
   useEffect(() => {
     if (isInitialRender) {
       setIsInitialRender(() => false);
 
-      // Listen for auth state changes. If not logged in, log in anonymously
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          listen(user);
-        }
-      });
-
       // Setup initial display dates
       initialDisplayDates();
     }
-  }, [isInitialRender, eventList]);
 
-  const handleMouseOver = (e) => {
-    setTimeout(() => {
-      const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
+    // Keep parent up to date on dates displayed
+    props.updateParentDates(displayDates);
+  }, [isInitialRender, displayDates]);
+
+  const getTimeFromCoords = (e) => {
+    const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
       const dfDims = {
         x: ref.current.clientWidth,
         y: ref.current.clientHeight,
       };
       const mouseCoords = { x: e.pageX, y: e.pageY };
-      const newTime = getIntendedTime(mouseCoords, dfOrigin, dfDims);
+      return getDateTime(
+        mouseCoords,
+        dfOrigin,
+        dfDims,
+        displayDates[0]
+      );
+  }
 
-      if (newTime !== cursorTime) {
+  // Necessary to display time while dragging list item
+  const handleMouseOver = (e) => {
+    setTimeout(() => {
+      const newTime = getTimeFromCoords(e);
+
+      if (newTime.getTime() !== cursorTime.getTime()) {
         setDateLineObj({
           ...dateLineObj,
-          top: mouseCoords.y,
+          top: e.pageY,
         });
         setCursorTime(() => newTime);
       }
     }, 10);
   };
 
+  // Necessary to display time while dragging events
+  const handleDragOver = (e) => {
+    e.preventDefault();
+
+    const newTime = getTimeFromCoords(e);
+
+    if (newTime.getTime() !== cursorTime.getTime()) {
+      setDateLineObj({
+        ...dateLineObj,
+        top: e.pageY,
+      });
+      setCursorTime(() => newTime);
+    }
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const newTime = getTimeFromCoords(e);
+    const path = e.dataTransfer.getData("text/plain");
+    
+    // TODO: re-write `schedule` in db-actions to use document path
+    updateDoc(doc(db, path), { scheduledStart: newTime });
+  }
+
   return (
     <>
-      <h2>Calendar</h2>
       <div className="calendar-container">
+        <div className="time-line" style={dateLineObj} />
         <div className="scroll-buttons">
           <button>{"<"}</button>
           <button>{">"}</button>
         </div>
-        <h3 className="time-readout">{cursorTime}</h3>
+        <h3 className="time-readout">
+          {cursorTime.toLocaleTimeString("en-US", { timeStyle: "short" })}
+        </h3>
         <HourColumn className="hour-column" />
         <DateBar className="date-bar" dates={displayDates} />
-        <div ref={ref} className="date-field" onMouseMove={handleMouseOver}>
-          {displayDates.map((day) => (
-            <Day key={day} day={day} />
+        {/*TODO: change to full 24 hours, size to start scroll at startTime, window shows to endTime*/}
+        <div
+          ref={ref}
+          id="date-field"
+          className="date-field"
+          onMouseMove={handleMouseOver}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {displayDates.map((day, i) => (
+            <Day key={i} day={day} />
           ))}
         </div>
-        <div className="time-line" style={dateLineObj} />
-        {/* <EventField /> */}
       </div>
     </>
   );

@@ -42,7 +42,6 @@ const List = () => {
 
   return (
     <>
-      <h2>List</h2>
       <Droppable droppableId="list">
         {(provided, snapshot) => (
           <div
@@ -64,7 +63,6 @@ const List = () => {
           </div>
         )}
       </Droppable>
-      {/* </div> */}
     </>
   );
 };

@@ -8,7 +8,7 @@ import { MyCalendar } from "./components/MyCalendar/MyCalendar";
 import { auth } from "./db/db";
 import "./App.css";
 import { signInWithGoogle } from "./auth";
-import { getIntendedTime } from "./components/MyCalendar/cal-utils";
+import { getDateTime } from "./components/MyCalendar/cal-utils";
 
 // TODO - add:
 // Edit √
@@ -38,15 +38,15 @@ import { getIntendedTime } from "./components/MyCalendar/cal-utils";
 // Repeating events
 // ---------------------------- MVP
 // Change Firestore I/O to real-time updates (replace Redux?) √
+// Add Redux back in to track calendar state (unless DND fixes issue and takes priority?)
 // Add Outlook
 // Cloud function removing old anons ("time-to-live" may do this!)
 // Handle detaching listeners for List and Calendar (?)[having a hard time storing unsub handle in state]
-// When dragging over calendar, drag in 5 min "steps"
+// When dragging over calendar, drag in 5 min "steps" [kind of fixed with dateline. Intend to resolve with new DND scheme]
 // Refactor (e.g. clean up App.js, standardize cases, map() to forEach(), when to use anon functions in setState?)
 // Solution for finding team up if no friends (random names? "Make available to team up" option? Matchmaking?)
-// (If not fixed:) save value of active input before leaving page
+// (If not fixed:) save value of active input before leaving page [could do this in useEffect return statement]
 // Indents (maybe switch to/extend Atlassian's tree framework for list)
-// Add anonymous sign-in?
 // Undo?
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
@@ -57,6 +57,8 @@ function App() {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [mouseCoords, setMouseCoords] = useState({});
   const ref = useRef(); // Forwarding ref to datefield
+  // TODO: change to Redux (?)
+  const [calDatesDisplayed, setCalDatesDisplayed] = useState([]);
 
   useEffect(() => {
     if (isInitialRender) {
@@ -87,19 +89,6 @@ function App() {
     }
   }, [isInitialRender]);
 
-  // const getIntendedTime = (dCoords) => {
-  //   const dDims = { x: ref.current.clientWidth, y: ref.current.clientHeight };
-  //   // TODO: change to settings from settings file
-  //   const initHour = 8.0;
-  //   const numHours = 14.0;
-  //   const dropTime =
-  //     initHour + numHours * ((mouseCoords.y - dCoords.y) / dDims.y);
-  //   const hour = Math.floor(dropTime);
-  //   const fracMins = dropTime - hour;
-  //   const nearestFiveMinFloor = Math.floor(fracMins * 12) * 5;
-  //   return hour + ":" + nearestFiveMinFloor;
-  // };
-
   const handleCalendarDrop = () => {
     const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
 
@@ -110,8 +99,7 @@ function App() {
 
     const dfDims = { x: ref.current.clientWidth, y: ref.current.clientHeight };
 
-    const time = getIntendedTime(mouseCoords, dfOrigin, dfDims);
-    return time;
+    return getDateTime(mouseCoords, dfOrigin, dfDims, calDatesDisplayed[0]);
   };
 
   const dragEndHandler = (result) => {
@@ -119,7 +107,7 @@ function App() {
 
     const time = handleCalendarDrop();
     if (time) {
-      console.log(time)
+      // console.log(time)
       schedule(draggableId, time);
       return;
     }
@@ -128,18 +116,24 @@ function App() {
     reorder(draggableId, source.index, destination.index);
   };
 
+  const updateCalDates = (dates) => {
+    setCalDatesDisplayed(() => dates);
+  }
+
   return (
     <DragDropContext onDragEnd={dragEndHandler}>
-      <nav>
-        <button onClick={signInWithGoogle}>"Sign in"</button>
-        <button onClick={() => auth.signOut()}>"Log out"</button>
-      </nav>
       <div className="grid-container">
-        <div className="list">
+        <div className="nav">
+          <button onClick={signInWithGoogle}>{"Sign in"}</button>
+          <button onClick={() => auth.signOut()}>{"Log out"}</button>
+        </div>
+        <h2 className="list-title">List</h2>
+        <div className="list-container">
           <List />
         </div>
-        <div className="mycalendar">
-          <MyCalendar ref={ref} />
+        {/* <h2 className="cal-title">Calendar</h2> */}
+        <div className="cal-container">
+          <MyCalendar ref={ref} updateParentDates={updateCalDates} />
         </div>
       </div>
     </DragDropContext>

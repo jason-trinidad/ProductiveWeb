@@ -2,21 +2,30 @@ import React from "react";
 import "./DateBar.css";
 
 const DateBar = (props) => {
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
   // Today's date, used to highlight today in the date bar
-  const now = new Date();
-  now.setHours(0);
-  now.setMinutes(0);
-  now.setSeconds(0);
-  now.setMilliseconds(0);
+  const today = new Date();
+  today.setHours(0);
+  today.setMinutes(0);
+  today.setSeconds(0);
+  today.setMilliseconds(0);
 
   return (
     <div className={props.className}>
       {props.dates.map((date) => (
         <h3
           key={date}
-          style={{ backgroundColor: date.getTime() === now.getTime() ? "lightgrey" : "transparent" }}
+          style={{
+            backgroundColor:
+              date.getTime() === today.getTime() ? "lightgrey" : "transparent",
+          }}
         >
-          {date.getMonth() + 1 + "/" + date.getDate()}
+          {dayNames[date.getDay()] +
+            " " +
+            (date.getMonth() + 1) +
+            "/" +
+            date.getDate()}
         </h3>
       ))}
     </div>
