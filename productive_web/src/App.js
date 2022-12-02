@@ -24,29 +24,32 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 //// Determine intended time from drop √
 //// Schedule task on drop √
 //// Create line/display showing time for scheduling √
-//// Add functionality for dates
-//// Decompose MyCalendar (re-add Redux?)
-// Drag to reschedule
-// Add scheduled details to task
-// Change to AM/PM times
-// Add row of dates
-// Change from divs to hrs for hours
+//// Add functionality for dates √
+// Drag to reschedule √
+// Drag to re-size event √
+// Modal to show event details on click
+// Implement repeat
+// Change hour-column to AM/PM times
+// Add row of dates √
 // Make calendar scrollable
 // Deadline
 // Team up
 // Streak
 // Repeating events
+// Style (notification bar, login status)
 // ---------------------------- MVP
-// Change Firestore I/O to real-time updates (replace Redux?) √
-// Add Redux back in to track calendar state (unless DND fixes issue and takes priority?)
-// Add Outlook
+// Handle detaching listeners for List and Calendar (?)[having a hard time storing unsub handle in state] √
+// Re-do date-grid. a) look better, b) align elements
 // Cloud function removing old anons ("time-to-live" may do this!)
-// Handle detaching listeners for List and Calendar (?)[having a hard time storing unsub handle in state]
+// Add Redux back in to track calendar state (unless DND fixes issue and takes priority?)
+// Refactor (e.g. clean up App.js, standardize cases, map() to forEach(), when to use anon functions in setState?, refactor calendar scheduling stuff)
+// Time budgets
+// Indents (maybe switch to/extend Atlassian's tree framework for list)
+// Add Outlook
+// Populate from Google Tasks+Calendar / Apple Reminders+Calendar
 // When dragging over calendar, drag in 5 min "steps" [kind of fixed with dateline. Intend to resolve with new DND scheme]
-// Refactor (e.g. clean up App.js, standardize cases, map() to forEach(), when to use anon functions in setState?)
 // Solution for finding team up if no friends (random names? "Make available to team up" option? Matchmaking?)
 // (If not fixed:) save value of active input before leaving page [could do this in useEffect return statement]
-// Indents (maybe switch to/extend Atlassian's tree framework for list)
 // Undo?
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts

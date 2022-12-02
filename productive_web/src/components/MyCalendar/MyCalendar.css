@@ -2,8 +2,8 @@
     border-left: 2px solid black;
     height: 100%; width: 100%;
     display: grid;
-    grid-template-rows: .1fr .5fr 5fr;
-    grid-template-columns: .1fr 5fr .5fr;
+    grid-template-rows: minmax(0, .1fr) minmax(0, .5fr) minmax(0, 5fr);
+    grid-template-columns: minmax(0, .1fr) minmax(0, 5fr) minmax(0, .5fr);
     grid-template-areas: 
         "time-readout time-readout scroll-buttons"
         ". date-bar date-bar"
@@ -28,14 +28,13 @@
     grid-area: 3 / 1 / 4 / 4;
     display: flex;
     flex-direction: column;
-    /* height: 100%; */
+    margin-top: -3.5px;
 }
 
 .date-field {
     grid-area: date-field;
     display: flex;
     flex-direction: row;
-    /* height: 100%; width: 100%; */
 }
 
 .time-readout {
@@ -52,9 +51,5 @@
     border-bottom: 2px solid;
     border-bottom-left-radius: 1px;
     width: 100%;
-}
-
-.event-field {
-    grid-area: date-field;
-    display: grid;
+    z-index: -1;
 }

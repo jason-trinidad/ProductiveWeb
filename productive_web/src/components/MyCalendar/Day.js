@@ -10,9 +10,10 @@ import { auth, db } from "../../db/db";
 const Day = (props) => {
   const [eventList, setEventList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
+  const [detachListener, setDetachListener] = useState(null);
 
   const listen = (user) => {
-    const start = props.day;
+    const start = props.date;
     const end = new Date(
       start.getFullYear(),
       start.getMonth(),
@@ -32,6 +33,7 @@ const Day = (props) => {
         ? setEventList(() => [])
         : setEventList(querySnapshot.docs);
     });
+    console.log("Attached listener")
 
     return unsub;
   };
@@ -43,16 +45,25 @@ const Day = (props) => {
       // Listen for auth state changes. If not logged in, log in anonymously
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          listen(user);
+          const unsub = listen(user);
+          setDetachListener(() => () => unsub());
         }
       });
     }
+
+    return () => {
+      if (detachListener) {
+        detachListener();
+        console.log("Detached listener");
+      }
+    };
   }, [isInitialRender]);
 
   const numRows = (settings.endTime - settings.startTime) * 12; // 5 min increments
 
   return (
     <div
+      id={props.date.toLocaleDateString("en-US")}
       className="day"
       style={{
         gridTemplateRows: `repeat(${numRows}, 1fr)`,

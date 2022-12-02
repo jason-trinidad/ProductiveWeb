@@ -3,4 +3,5 @@
     display: grid;
     border: 3px solid gainsboro;
     margin-left: -3px;
+    min-width: 0px;
 }

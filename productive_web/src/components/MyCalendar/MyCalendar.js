@@ -14,7 +14,8 @@ import { db } from "../../db/db";
 
 export const MyCalendar = React.forwardRef((props, ref) => {
   const [isInitialRender, setIsInitialRender] = useState(true);
-  const [displayDates, setdisplayDates] = useState([]);
+  const [displayDates, setDisplayDates] = useState([]);
+  const [dateOffset, setDateOffset] = useState(0)
   const [dateLineObj, setDateLineObj] = useState({
     color: "red",
     top: 0,
@@ -23,7 +24,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
 
   const initialDisplayDates = () => {
     const now = new Date();
-    const days = Array.from(
+    const dates = Array.from(
       { length: settings.displayDays },
       (x, i) =>
         new Date(
@@ -33,8 +34,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
           now.getDate() - now.getDay() + settings.firstDisplayDay + i
         )
     );
-
-    setdisplayDates(() => days);
+    setDisplayDates(() => dates);
   };
 
   useEffect(() => {
@@ -91,6 +91,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
 
   // TODO: why is drop firing so inconsistent?
   const handleDrop = (e) => {
+    console.log("Dropped");
     e.preventDefault();
     const dropTime = getTimeFromCoords(e);
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
@@ -106,11 +107,15 @@ export const MyCalendar = React.forwardRef((props, ref) => {
         break;
       case "top":
         newEnd = new Date(data.endMSecs);
-        dropTime.getTime() < newEnd.getTime() ? newStart = dropTime : newStart = new Date(data.startMSecs);
+        dropTime.getTime() < newEnd.getTime()
+          ? (newStart = dropTime)
+          : (newStart = new Date(data.startMSecs));
         break;
       case "bottom":
         newStart = new Date(data.startMSecs);
-        dropTime.getTime() > newStart.getTime() ? newEnd = dropTime : newEnd = new Date(data.endMSecs);
+        dropTime.getTime() > newStart.getTime()
+          ? (newEnd = dropTime)
+          : (newEnd = new Date(data.endMSecs));
         break;
     }
 
@@ -118,13 +123,23 @@ export const MyCalendar = React.forwardRef((props, ref) => {
     updateDoc(doc(db, data.path), { startTime: newStart, endTime: newEnd });
   };
 
+  const scrollCalendar = (e) => {
+    let direction;
+    e.currentTarget.id === "left-scroll" ? direction = -1 : direction = 1;
+
+    setDisplayDates(prev =>
+      prev.map(prevDate => new Date(prevDate.getTime() + direction * 24 * 60 * 60 * 1000))
+    );
+    setDateOffset(prev => prev + direction * 1);
+  };
+
   return (
     <>
-      <div className="calendar-container">
+      <div id="calendar-container" className="calendar-container">
         <div className="time-line" style={dateLineObj} />
         <div className="scroll-buttons">
-          <button>{"<"}</button>
-          <button>{">"}</button>
+          <button id="left-scroll" onClick={scrollCalendar}>{"<"}</button>
+          <button id="right-scroll" onClick={scrollCalendar}>{">"}</button>
         </div>
         <h3 className="time-readout">
           {cursorTime.toLocaleTimeString("en-US", { timeStyle: "short" })}
@@ -140,8 +155,8 @@ export const MyCalendar = React.forwardRef((props, ref) => {
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
-          {displayDates.map((day, i) => (
-            <Day key={i} day={day} />
+          {displayDates.map((date, i) => (
+            <Day key={(i + dateOffset).toString()} dayNumber={i} date={date} />
           ))}
         </div>
       </div>

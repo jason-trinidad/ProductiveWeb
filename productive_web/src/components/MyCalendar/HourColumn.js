@@ -9,11 +9,21 @@ const HourColumn = (props) => {
     (x, i) => i + settings.startTime
   );
 
-  return(
+  return (
     <div className={props.className}>
-        {hours.map((hour) => <div className="hour" key={hour}>{hour}</div>)}
+      {hours.map((hour) => (
+        <div
+          className="hour"
+          key={hour}
+          onDrop={() => {
+            console.log("Dropped on HourColumn");
+          }}
+        >
+          {hour}
+        </div>
+      ))}
     </div>
-  )
+  );
 };
 
 export default HourColumn;

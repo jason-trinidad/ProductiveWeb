@@ -1,6 +1,4 @@
 .event {
-    /* border: 1px solid black;
-    border-radius: 2px; */
     background-color: aqua;
     width: 100%;
     cursor: grab;
@@ -9,8 +7,26 @@
     flex-direction: column;
 }
 
+.event-detail {
+    background-color: tan;
+    /* grid-column: 1 / 2; */
+    /* justify-self: center; */
+    z-index: 101;
+    box-shadow: 10px 5px 5px black;
+}
+
 .edge {
-    border-top: 3px solid aqua;
+    border-top: 3px solid transparent;
     margin-top: -2px;
     cursor: ns-resize;
+}
+
+.time-container {
+    display: flex;
+    background-color: aquamarine;
+}
+
+.time-container input {
+    size: "2";
+    background-color: blue;
 }
