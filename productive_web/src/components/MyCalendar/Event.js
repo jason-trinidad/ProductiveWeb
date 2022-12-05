@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { schedule } from "../../db/db-actions";
 
 import { getCSSGridRow } from "./cal-utils";
 import "./Event.css";
+import EventDetail from "./EventDetail";
 
 const Event = (props) => {
   // TODO: put z-indices in CSS file
   const [isSelected, setIsSelected] = useState(false);
+  const [formData, setFormData] = useState(null);
   const rows = getCSSGridRow(props.docSnap);
 
   const handleEventDragStart = (e) => {
@@ -41,6 +44,20 @@ const Event = (props) => {
     e.dataTransfer.setData("text/plain", JSON.stringify(data));
   };
 
+  const trackFormData = (data) => {
+    setFormData({ ...data });
+  };
+
+  useEffect(() => {
+    if (formData && !isSelected)
+      schedule(
+        props.docSnap.data().dragId,
+        formData.startTime,
+        formData.endTime,
+        formData.title
+      );
+  }, [isSelected]);
+
   return (
     <div
       className={isSelected ? "event-detail" : "event"}
@@ -52,33 +69,7 @@ const Event = (props) => {
       }}
     >
       {isSelected ? (
-        <form>
-          <input style={{size: 2}} value={props.docSnap.data().title} />
-          <div className="time-container">
-            <input type="text"
-              value={props.docSnap.data().startTime.toDate().getMonth() + 1}
-            />
-            <input value={props.docSnap.data().startTime.toDate().getDate()} />
-            <input
-              value={props.docSnap.data().startTime.toDate().getFullYear()}
-            />
-            <input value={props.docSnap.data().startTime.toDate().getHours()} />
-            <input
-              value={props.docSnap.data().startTime.toDate().getMinutes()}
-            />
-          </div>
-          <div style={{ display: "flex" }}>
-            <input
-              value={props.docSnap.data().endTime.toDate().getMonth() + 1}
-            />
-            <input value={props.docSnap.data().endTime.toDate().getDate()} />
-            <input
-              value={props.docSnap.data().endTime.toDate().getFullYear()}
-            />
-            <input value={props.docSnap.data().endTime.toDate().getHours()} />
-            <input value={props.docSnap.data().endTime.toDate().getMinutes()} />
-          </div>
-        </form>
+        <EventDetail docSnap={props.docSnap} passFormData={trackFormData} />
       ) : (
         <>
           <div
@@ -87,13 +78,12 @@ const Event = (props) => {
             onDragStart={handleTopDragStart}
           />
           <div>
-            {props.docSnap.data().title +
-              ": " +
-              props.docSnap
-                .data()
-                .endTime.toDate()
-                .toLocaleString("en-US")}
+            {props.docSnap
+              .data()
+              .startTime.toDate()
+              .toLocaleTimeString("en-US", { timeStyle: "short" })}
           </div>
+          <h3 style={{margin: "0"}}>{props.docSnap.data().title}</h3>
           <div
             className="edge"
             draggable="true"

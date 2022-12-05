@@ -8,8 +8,8 @@ import {
   orderBy,
   getDocs,
   updateDoc,
-  deleteDoc,
   addDoc,
+  deleteDoc,
   where,
 } from "firebase/firestore";
 import * as settings from "../components/MyCalendar/cal-settings";
@@ -75,13 +75,27 @@ export const update = (doc, title) => {
 };
 
 // TODO: check if last item in collection! Rn someone could hold delete on first/only line and cause a bunch of pings
-export const remove = (doc) => {
-  deleteDoc(doc.ref);
+// TODO: re-think ordering scheme so we can order by on server but avoid iteration on client
+export const remove = async (toRemove) => {
+  await deleteDoc(toRemove.ref);
+  
+  const { taskStore, tasks } = await getAllTasks();
+
+  // Update new list indices
+  const batch = writeBatch(db);
+
+  tasks.docs.forEach((doc, i) => {
+    batch.update(doc.ref, { listIndex: i });
+  })
+
+  batch.commit();
 };
 
 // TODO: transaction?
 export const reorder = async (dragId, source, destination) => {
   const { tasks } = await getAllTasks();
+
+  console.log("Source: " + source + ", Dest: " + destination);
 
   // Set range of the list indices to be changed, as their direction of change
   const start = destination > source ? source : destination;
@@ -111,6 +125,8 @@ export const toggleDone = (doc) => {
   updateDoc(doc.ref, { isDone: !doc.data().isDone });
 };
 
+// Migrate anon data to new signed-in user
+// TODO: move check for existing user here, to allow more general use of function
 export const migrate = async (prevUser, currUser) => {
   // Get previous user's data
   const { tasks } = await getAllTasks(prevUser);
@@ -122,19 +138,37 @@ export const migrate = async (prevUser, currUser) => {
   );
 };
 
-export const schedule = async (dragId, startTime) => {
+// TODO: fix this dragId stuff
+export const schedule = async (
+  dragId,
+  startTime,
+  endTime = null,
+  title = null
+) => {
   // Query to find docRef from dragId
   const user = auth.currentUser;
   const taskStore = "Users/" + user.uid + "/Tasks";
   const q = query(collection(db, taskStore), where("dragId", "==", dragId));
   const snapshot = await getDocs(q);
 
-  // Calc default end time
-  const endTime = new Date(
-    startTime.getTime() + settings.defaultDuration * 60 * 1000
-  );
+  // If no end time provided, assume event should end after default duration
+  if (startTime && !endTime) {
+    endTime = new Date(
+      startTime.getTime() + settings.defaultDuration * 60 * 1000
+    );
+  }
 
+  if (!title) {
+    title = snapshot.docs[0].data().title;
+  }
+
+  console.log("Updating db with following data");
+  console.log({ title: title, startTime: startTime, endTime: endTime });
+
+  // console.log("Updating the following doc:")
+  // console.log(snapshot.docs[0].data())
   await updateDoc(snapshot.docs[0].ref, {
+    title: title,
     startTime: startTime,
     endTime: endTime,
   });

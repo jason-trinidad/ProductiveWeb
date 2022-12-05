@@ -51,18 +51,18 @@ const List = () => {
           >
             {taskList.map((task, index) => (
               <TaskItem
-                snapshot={task}
+                snapshot={task} // TODO: change db functions so only ref or path is needed
                 key={task.data().key}
-                id={task.data().key}
                 draggableId={task.data().dragId}
                 index={index}
-                title={task.data().title}
+                data={{ ...task.data() }} 
               />
             ))}
             {provided.placeholder}
           </div>
         )}
       </Droppable>
+      {/* </div> */}
     </>
   );
 };

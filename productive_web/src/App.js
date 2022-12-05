@@ -27,22 +27,24 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 //// Add functionality for dates √
 // Drag to reschedule √
 // Drag to re-size event √
-// Modal to show event details on click
-// Implement repeat
-// Change hour-column to AM/PM times
+// Modal to show event details on click √
+// Implement repeats
 // Add row of dates √
 // Make calendar scrollable
 // Deadline
 // Team up
 // Streak
 // Repeating events
+// Change hour-column to AM/PM times
 // Style (notification bar, login status)
 // ---------------------------- MVP
 // Handle detaching listeners for List and Calendar (?)[having a hard time storing unsub handle in state] √
 // Re-do date-grid. a) look better, b) align elements
 // Cloud function removing old anons ("time-to-live" may do this!)
-// Add Redux back in to track calendar state (unless DND fixes issue and takes priority?)
-// Refactor (e.g. clean up App.js, standardize cases, map() to forEach(), when to use anon functions in setState?, refactor calendar scheduling stuff)
+// Add Redux back in to track calendar state (fewer re-renders, fewer document listeners?)
+// Refactor (e.g. clean up App.js, standardize cases, map() -> forEach(), when to use anon functions in setState?, 
+    // refactor db interaction, function naming conventions, dedicated skip initial render hook)
+    // Is there a way to write docs for each function using comments?
 // Time budgets
 // Indents (maybe switch to/extend Atlassian's tree framework for list)
 // Add Outlook
@@ -55,6 +57,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // Keyboard shortcuts
 // Input on short click, drag/drop on long clicks
 // Offline support
+// 5 min task section (drag or tag task as 5 min, shows in window above List. No nesting, copied from List)
 
 function App() {
   const [isInitialRender, setIsInitialRender] = useState(true);
@@ -110,7 +113,6 @@ function App() {
 
     const time = handleCalendarDrop();
     if (time) {
-      // console.log(time)
       schedule(draggableId, time);
       return;
     }

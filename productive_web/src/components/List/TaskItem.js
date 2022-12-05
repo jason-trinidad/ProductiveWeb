@@ -4,11 +4,10 @@ import { Draggable } from "react-beautiful-dnd";
 import styles from "./TaskItem.module.css";
 import * as dbActions from "../../db/db-actions";
 
+// TODO: this should be a controlled element from the element with a listener so that it will update correctly
 const TaskItem = (props) => {
-  // const tasks = useSelector((state) => state.tasks);
-  const taskInfo = props.snapshot.data();
-
-  const [enteredTitle, setEnteredTitle] = useState(taskInfo.title);
+  const [enteredTitle, setEnteredTitle] = useState(props.data.title);
+  const taskInfo = props.data;
 
   // Handle keyboard shortcuts
   const keyShortsHandler = (event) => {
