@@ -25,12 +25,13 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 //// Schedule task on drop √
 //// Create line/display showing time for scheduling √
 //// Add functionality for dates √
-// Drag to reschedule √
-// Drag to re-size event √
-// Modal to show event details on click √
-// Implement repeats
-// Add row of dates √
-// Make calendar scrollable
+//// Drag to reschedule √
+//// Drag to re-size event √
+//// Modal to show event details on click √
+//// Implement repeats
+//// Add row of dates √
+//// Make calendar scrollable
+//// Prettify
 // Deadline
 // Team up
 // Streak
@@ -41,6 +42,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // Handle detaching listeners for List and Calendar (?)[having a hard time storing unsub handle in state] √
 // Re-do date-grid. a) look better, b) align elements
 // Cloud function removing old anons ("time-to-live" may do this!)
+// Look into build tools (incremental builds, FB emulators)
 // Add Redux back in to track calendar state (fewer re-renders, fewer document listeners?)
 // Refactor (e.g. clean up App.js, standardize cases, map() -> forEach(), when to use anon functions in setState?, 
     // refactor db interaction, function naming conventions, dedicated skip initial render hook)
@@ -77,7 +79,7 @@ function App() {
         } else {
           signInAnonymously(auth)
             .then(() => {
-              addFirstLine(); // Provide first line for this new user
+              addFirstLine();
             })
             .catch((error) => {
               const errorMessage = error.message;
@@ -86,7 +88,7 @@ function App() {
         };
       });
 
-      // Add a listener to aid creating CalendarItem on DnD from List
+      // Add a listener to aid creating calendar event on drop from List
       document.addEventListener("mouseup", (event) => {
         setMouseCoords(() => ({ x: event.pageX, y: event.pageY }));
       });
@@ -98,7 +100,6 @@ function App() {
   const handleCalendarDrop = () => {
     const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
 
-    // NOTE: sensing currently depends on calendar layout
     if (mouseCoords.x < dfOrigin.x || mouseCoords.y < dfOrigin.y) {
       return null;
     }
@@ -136,7 +137,6 @@ function App() {
         <div className="list-container">
           <List />
         </div>
-        {/* <h2 className="cal-title">Calendar</h2> */}
         <div className="cal-container">
           <MyCalendar ref={ref} updateParentDates={updateCalDates} />
         </div>
