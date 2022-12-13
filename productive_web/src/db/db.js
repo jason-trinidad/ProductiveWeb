@@ -1,10 +1,11 @@
 import { initializeApp } from "firebase/app";
-// import { getAnalytics } from "firebase/analytics";
+import { getAnalytics } from "firebase/analytics";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import {
   getFirestore,
   connectFirestoreEmulator,
 } from "firebase/firestore";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -28,3 +29,7 @@ connectAuthEmulator(auth, "http://localhost:9099");
 // DB
 export const db = getFirestore(app);
 connectFirestoreEmulator(db, "localhost", 8080);
+
+// Functions
+export const functions = getFunctions(app);
+connectFunctionsEmulator(functions, "localhost", 5001);

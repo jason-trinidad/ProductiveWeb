@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { schedule } from "../../db/db-actions";
+import {
+  createTeamUp,
+  confirmTeamUp,
+  getTeamUpInvites,
+  schedule,
+  getStreak,
+} from "../../db/db-actions";
 
 import "./EventDetail.css";
 
-// Mystery 1: Why are start and end times shown in EventDetail initially the same? Scheduled that way? [typo] √
-// Mystery 2: Why is a new task's listIndex so high?
-// Mystery 3: Why does re-ordering now fail on a new task? (Bc of changes to schedule?)
-
 const EventDetail = (props) => {
+  const [invites, setInvites] = useState([]);
+  const [streak, setStreak] = useState(null);
+
   const startTime = props.docSnap.data().startTime.toDate();
   const endTime = props.docSnap.data().endTime.toDate();
-
 
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [enteredTitle, setEnteredTitle] = useState(props.docSnap.data().title);
@@ -31,11 +35,24 @@ const EventDetail = (props) => {
 
   useEffect(() => {
     if (isInitialRender) {
-        setIsInitialRender(false);
-        return;
+      setIsInitialRender(false);
+
+      // Save invites to state, if any
+      getTeamUpInvites().then((inviteQSnap) => {
+        if (!inviteQSnap.empty) setInvites(inviteQSnap.docs);
+      });
+
+      // Save streak to state, if any
+      getStreak(props.docSnap).then((streakLength) => {
+        if (streakLength !== null) {
+          setStreak(streakLength);
+        }
+      });
+
+      return;
     }
 
-    props.passFormData( {
+    props.passFormData({
       startTime: new Date(
         startTimeText.year,
         startTimeText.month,
@@ -104,79 +121,121 @@ const EventDetail = (props) => {
   const handleClick = (e) => {
     e.preventDefault();
     schedule(props.docSnap.data().dragId, null, null);
-  }
+  };
+
+  const handleTeamUpRequest = (e) => {
+    e.preventDefault();
+    const requestedPartner = e.target.teamUpEmail.value;
+    // TODO: require email login to team up
+
+    // Case where user is confirming an invite
+    invites.forEach((invite) => {
+      console.log("Checking invites");
+      if (invite.data().partnerEmail === requestedPartner) {
+        console.log("Found match");
+        confirmTeamUp(invite, props.docSnap.ref);
+        return;
+      }
+    });
+
+    // TODO: validate user
+    // Otherwise, invite a different user
+    createTeamUp(props.docSnap, requestedPartner);
+  };
 
   return (
-    <form>
-      <input value={enteredTitle} onChange={titleChangeHandler} />
-      <div className="time-container">
-        <input
-          id="start/month"
-          type="text"
-          onChange={timeChangeHandler}
-          value={Number(startTimeText.month) + 1}
-        />
-        <input
-          id="start/date"
-          type="text"
-          onChange={timeChangeHandler}
-          value={startTimeText.date}
-        />
-        <input
-          id="start/year"
-          type="text"
-          onChange={timeChangeHandler}
-          style={{ width: "4em" }}
-          value={startTimeText.year}
-        />
-        <input
-          id="start/hours"
-          type="text"
-          onChange={timeChangeHandler}
-          value={startTimeText.hours}
-        />
-        <input
-          id="start/minutes"
-          type="text"
-          onChange={timeChangeHandler}
-          value={startTimeText.minutes}
-        />
+    <>
+      <div style={{ display: "flex" }}>
+        <form>
+          <input value={enteredTitle} onChange={titleChangeHandler} />
+        </form>
+        {/* {streak ? <div>{streak}</div> : null} */}
+        <div>{streak}</div>
       </div>
-      <div className="time-container">
+      <form>
+        <div className="time-container">
+          <input
+            id="start/month"
+            type="text"
+            onChange={timeChangeHandler}
+            value={Number(startTimeText.month) + 1}
+          />
+          <input
+            id="start/date"
+            type="text"
+            onChange={timeChangeHandler}
+            value={startTimeText.date}
+          />
+          <input
+            id="start/year"
+            type="text"
+            onChange={timeChangeHandler}
+            style={{ width: "4em" }}
+            value={startTimeText.year}
+          />
+          <input
+            id="start/hours"
+            type="text"
+            onChange={timeChangeHandler}
+            value={startTimeText.hours}
+          />
+          <input
+            id="start/minutes"
+            type="text"
+            onChange={timeChangeHandler}
+            value={startTimeText.minutes}
+          />
+        </div>
+        <div className="time-container">
+          <input
+            id="end/month"
+            type="text"
+            onChange={timeChangeHandler}
+            value={Number(endTimeText.month) + 1}
+          />
+          <input
+            id="end/date"
+            type="text"
+            onChange={timeChangeHandler}
+            value={endTimeText.date}
+          />
+          <input
+            id="end/year"
+            type="text"
+            onChange={timeChangeHandler}
+            style={{ width: "4em" }}
+            value={endTimeText.year}
+          />
+          <input
+            id="end/hours"
+            type="text"
+            onChange={timeChangeHandler}
+            value={endTimeText.hours}
+          />
+          <input
+            id="end/minutes"
+            type="text"
+            onChange={timeChangeHandler}
+            value={endTimeText.minutes}
+          />
+        </div>
+      </form>
+      <form onSubmit={handleTeamUpRequest}>
         <input
-          id="end/month"
+          id="teamUpEmail"
+          list="teamList"
           type="text"
-          onChange={timeChangeHandler}
-          value={Number(endTimeText.month) + 1}
+          autoComplete="email"
+          placeholder="Team-up?"
         />
-        <input
-          id="end/date"
-          type="text"
-          onChange={timeChangeHandler}
-          value={endTimeText.date}
-        />
-        <input
-          id="end/year"
-          type="text"
-          onChange={timeChangeHandler}
-          style={{ width: "4em" }}
-          value={endTimeText.year}
-        />
-        <input
-          id="end/hours"
-          type="text"
-          onChange={timeChangeHandler}
-          value={endTimeText.hours}
-        />
-        <input
-          id="end/minutes"
-          type="text"
-          onChange={timeChangeHandler}
-          value={endTimeText.minutes}
-        />
-      </div>
+        <datalist id="teamList">
+          {invites.map((invite, i) => (
+            <option key={i} value={invite.data().partnerEmail} />
+          ))}
+        </datalist>
+      </form>
       <button onClick={handleClick}>Un-Schedule</button>
-    </form>
+    </>
   );
 };
 

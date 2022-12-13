@@ -26,15 +26,5 @@ export const getDateTime = (mouseCoords, dfOrigin, dfDims, firstDate) => {
 };
 
 // TODO: this would be more helpful if generalized time -> grid row
-export const getCSSGridRow = (doc) => {
-  const eventStartTime = doc.data().startTime.toDate();
-  const eventEndTime = doc.data().endTime.toDate();
-
-  const startFrac =
-    (eventStartTime.getHours() - settings.startTime) * 12 +
-    Math.floor(eventStartTime.getMinutes() / 5);
-  const endFrac = (eventEndTime.getHours() - settings.startTime) * 12 +
-    Math.floor(eventEndTime.getMinutes() / 5);
-
-  return `${startFrac} / ${endFrac}`;
-};
+export const dateToCSSGridRow = (date) => 
+  date.getHours() * 12 + Math.floor(date.getMinutes() / 5);

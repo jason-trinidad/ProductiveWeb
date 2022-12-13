@@ -2,12 +2,12 @@
     border-left: 2px solid black;
     height: 100%; width: 100%;
     display: grid;
-    grid-template-rows: minmax(0, .1fr) minmax(0, .5fr) minmax(0, 5fr);
+    grid-template-rows: minmax(0, 64px) minmax(0, .5fr) minmax(0, 5fr);
     grid-template-columns: minmax(0, .1fr) minmax(0, 5fr) minmax(0, .5fr);
     grid-template-areas: 
         "time-readout time-readout scroll-buttons"
         ". date-bar date-bar"
-        ". date-field date-field"
+        "date-container date-container date-container"
     ;
     padding: 0 0 5px 0;
 }
@@ -24,17 +24,28 @@
     justify-content: space-around;
 }
 
+.date-container {
+    grid-area: date-container;
+    display: grid;
+    grid-template-columns: minmax(4em, .1fr) minmax(0, 5.5fr);
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-areas: "hour-column date-field";
+    overflow-y: auto;
+}
+
 .hour-column {
-    grid-area: 3 / 1 / 4 / 4;
-    display: flex;
-    flex-direction: column;
-    margin-top: -3.5px;
+    grid-area: hour-column;
+    margin-top: -.5em;
+}
+
+.date-grid {
+    grid-area: 1 / 2 / -1 / -1
 }
 
 .date-field {
     grid-area: date-field;
+    height: 100%;
     display: flex;
-    flex-direction: row;
 }
 
 .time-readout {

@@ -1,21 +1,21 @@
 import React, { useState, useEffect } from "react";
 
 import HourColumn from "./HourColumn";
-import Day from "./Day";
 import DateBar from "./DateBar";
+import DateGrid from "./DateGrid";
 import "./MyCalendar.css";
 import * as settings from "./cal-settings";
 import { getDateTime } from "./cal-utils";
-import { schedule } from "../../db/db-actions";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../db/db";
+import DateField from "./DateField";
 
 // TODO: add Redux back in for view state? (Not data state.)
 
 export const MyCalendar = React.forwardRef((props, ref) => {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [displayDates, setDisplayDates] = useState([]);
-  const [dateOffset, setDateOffset] = useState(0)
+  const [dateOffset, setDateOffset] = useState(0);
   const [dateLineObj, setDateLineObj] = useState({
     color: "red",
     top: 0,
@@ -125,41 +125,48 @@ export const MyCalendar = React.forwardRef((props, ref) => {
 
   const scrollCalendar = (e) => {
     let direction;
-    e.currentTarget.id === "left-scroll" ? direction = -1 : direction = 1;
+    e.currentTarget.id === "left-scroll" ? (direction = -1) : (direction = 1);
 
-    setDisplayDates(prev =>
-      prev.map(prevDate => new Date(prevDate.getTime() + direction * 24 * 60 * 60 * 1000))
+    setDisplayDates((prev) =>
+      prev.map(
+        (prevDate) =>
+          new Date(prevDate.getTime() + direction * 24 * 60 * 60 * 1000)
+      )
     );
-    setDateOffset(prev => prev + direction * 1);
+    setDateOffset((prev) => prev + direction * 1);
   };
 
   return (
-    <>
-      <div id="calendar-container" className="calendar-container">
-        <div className="time-line" style={dateLineObj} />
-        <div className="scroll-buttons">
-          <button id="left-scroll" onClick={scrollCalendar}>{"<"}</button>
-          <button id="right-scroll" onClick={scrollCalendar}>{">"}</button>
-        </div>
-        <h3 className="time-readout">
-          {cursorTime.toLocaleTimeString("en-US", { timeStyle: "short" })}
-        </h3>
-        <HourColumn className="hour-column" />
-        <DateBar className="date-bar" dates={displayDates} />
-        {/*TODO: change to full 24 hours, size to start scroll at startTime, window shows to endTime*/}
-        <div
-          ref={ref}
-          id="date-field"
-          className="date-field"
-          onMouseMove={handleMouseOver}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          {displayDates.map((date, i) => (
-            <Day key={(i + dateOffset).toString()} dayNumber={i} date={date} />
-          ))}
-        </div>
+    <div id="calendar-container" className="calendar-container">
+      <div className="time-line" style={dateLineObj} />
+      <div className="scroll-buttons">
+        <button id="left-scroll" onClick={scrollCalendar}>
+          {"<"}
+        </button>
+        <button id="right-scroll" onClick={scrollCalendar}>
+          {">"}
+        </button>
       </div>
-    </>
+      <h3 className="time-readout">
+        {cursorTime.toLocaleTimeString("en-US", { timeStyle: "short" })}
+      </h3>
+      <DateBar className="date-bar" dates={displayDates} />
+      <div
+        ref={ref}
+        id="date-container"
+        className="date-container"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+        onMouseMove={handleMouseOver}
+      >
+        <HourColumn className="hour-column" />
+        <DateGrid className="date-grid" />
+        <DateField
+          className="date-field"
+          displayDates={displayDates}
+          dateOffset={dateOffset}
+        />
+      </div>
+    </div>
   );
 });

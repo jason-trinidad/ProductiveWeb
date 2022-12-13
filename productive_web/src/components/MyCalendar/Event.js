@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { schedule } from "../../db/db-actions";
 
-import { getCSSGridRow } from "./cal-utils";
+import { dateToCSSGridRow } from "./cal-utils";
 import "./Event.css";
 import EventDetail from "./EventDetail";
 
@@ -9,7 +9,9 @@ const Event = (props) => {
   // TODO: put z-indices in CSS file
   const [isSelected, setIsSelected] = useState(false);
   const [formData, setFormData] = useState(null);
-  const rows = getCSSGridRow(props.docSnap);
+  const startRow = dateToCSSGridRow(props.docSnap.data().startTime.toDate());
+  const endRow = dateToCSSGridRow(props.docSnap.data().endTime.toDate());
+  const rows = `${startRow} / ${endRow}`;
 
   const handleEventDragStart = (e) => {
     e.stopPropagation();

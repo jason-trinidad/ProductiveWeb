@@ -7,6 +7,7 @@ import {
   query,
   orderBy,
   getDocs,
+  getDoc,
   updateDoc,
   addDoc,
   deleteDoc,
@@ -75,10 +76,10 @@ export const update = (doc, title) => {
 };
 
 // TODO: check if last item in collection! Rn someone could hold delete on first/only line and cause a bunch of pings
-// TODO: re-think ordering scheme so we can order by on server but avoid iteration on client
+// TODO: re-think ordering scheme so we can order by on server AND avoid iteration on client
 export const remove = async (toRemove) => {
   await deleteDoc(toRemove.ref);
-  
+
   const { taskStore, tasks } = await getAllTasks();
 
   // Update new list indices
@@ -86,7 +87,7 @@ export const remove = async (toRemove) => {
 
   tasks.docs.forEach((doc, i) => {
     batch.update(doc.ref, { listIndex: i });
-  })
+  });
 
   batch.commit();
 };
@@ -121,7 +122,62 @@ export const reorder = async (dragId, source, destination) => {
   batch.commit();
 };
 
+export const createTeamUp = async (doc, email) => {
+  const user = auth.currentUser;
+  const requestStore = "Users/" + user.uid + "/Requests";
+  await addDoc(collection(db, requestStore), {
+    partnerEmail: email,
+    taskRef: doc.ref,
+  });
+};
+
+export const getTeamUpInvites = () => {
+  const user = auth.currentUser;
+  const inviteStore = "Users/" + user.uid + "/Invites";
+  const q = query(collection(db, inviteStore));
+  return getDocs(q);
+};
+
+export const confirmTeamUp = (invite, taskRef) => {
+  console.log("Creating ongoing");
+  const user = auth.currentUser;
+  const ongoingStore = "Users/" + user.uid + "/Ongoing";
+  const newOngoing = doc(collection(db, ongoingStore));
+
+  const batch = writeBatch(db);
+  batch.set(newOngoing, {
+    confirmer: true,
+    taskRef: taskRef,
+    partnerEmail: invite.data().partnerEmail,
+    partnerRequestId: invite.data().partnerRequestId,
+    selfCompletedToday: false, // TODO: actually check
+    streak: 0,
+    updatedToday: false,
+  });
+
+  batch.update(taskRef, {
+    teamUpRef: newOngoing,
+  });
+
+  batch.delete(invite.ref);
+
+  batch.commit();
+};
+
+export const getStreak = async (task) => {
+  if (task.data().teamUpRef) {
+    const snap = await getDoc(task.data().teamUpRef);
+    return snap.empty ? null : snap.data().streak;
+  }
+
+  return;
+};
+
 export const toggleDone = (doc) => {
+  // Update TeamUp doc if it exists
+  if (doc.data().teamUpRef)
+    updateDoc(doc.data().teamUpRef, { selfCompletedToday: !doc.data().isDone });
+
   updateDoc(doc.ref, { isDone: !doc.data().isDone });
 };
 
@@ -162,11 +218,6 @@ export const schedule = async (
     title = snapshot.docs[0].data().title;
   }
 
-  console.log("Updating db with following data");
-  console.log({ title: title, startTime: startTime, endTime: endTime });
-
-  // console.log("Updating the following doc:")
-  // console.log(snapshot.docs[0].data())
   await updateDoc(snapshot.docs[0].ref, {
     title: title,
     startTime: startTime,

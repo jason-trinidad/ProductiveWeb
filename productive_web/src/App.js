@@ -30,16 +30,18 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 //// Modal to show event details on click √
 //// Implement repeats
 //// Add row of dates √
-//// Make calendar scrollable
+//// Make calendar scrollable √
+//// Fix drop-time math
 //// Prettify
 // Deadline
 // Team up
+//// Create request √
+//// Create invite √
+//// 
 // Streak
-// Repeating events
-// Change hour-column to AM/PM times
+// Change hour-column to AM/PM times √
 // Style (notification bar, login status)
 // ---------------------------- MVP
-// Handle detaching listeners for List and Calendar (?)[having a hard time storing unsub handle in state] √
 // Re-do date-grid. a) look better, b) align elements
 // Cloud function removing old anons ("time-to-live" may do this!)
 // Look into build tools (incremental builds, FB emulators)
@@ -48,6 +50,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
     // refactor db interaction, function naming conventions, dedicated skip initial render hook)
     // Is there a way to write docs for each function using comments?
 // Time budgets
+// Desktop push notifications
 // Indents (maybe switch to/extend Atlassian's tree framework for list)
 // Add Outlook
 // Populate from Google Tasks+Calendar / Apple Reminders+Calendar

@@ -33,7 +33,7 @@ const Day = (props) => {
         ? setEventList(() => [])
         : setEventList(querySnapshot.docs);
     });
-    console.log("Attached listener")
+    console.log("Attached listener");
 
     return unsub;
   };
@@ -59,7 +59,8 @@ const Day = (props) => {
     };
   }, [isInitialRender]);
 
-  const numRows = (settings.endTime - settings.startTime) * 12; // 5 min increments
+  const numRows = 24 * 12; // 5 min increments
+  const dayHeight = 24 * settings.hourHeight;
 
   return (
     <div
@@ -68,6 +69,8 @@ const Day = (props) => {
       style={{
         gridTemplateRows: `repeat(${numRows}, 1fr)`,
         gridTemplateColumns: "1fr",
+        height: dayHeight + 24,
+        marginTop: 8,
       }}
     >
       {eventList.map((docSnap, i) => (
