@@ -37,7 +37,7 @@ const EventDetail = (props) => {
     if (isInitialRender) {
       setIsInitialRender(false);
 
-      // Save invites to state, if any
+      // Get invites, if any
       getTeamUpInvites().then((inviteQSnap) => {
         if (!inviteQSnap.empty) setInvites(inviteQSnap.docs);
       });
@@ -118,9 +118,11 @@ const EventDetail = (props) => {
     }
   };
 
+  // TODO: reset TeamUp, streak and rename function
   const handleClick = (e) => {
     e.preventDefault();
     schedule(props.docSnap.data().dragId, null, null);
+    setStreak(null);
   };
 
   const handleTeamUpRequest = (e) => {
@@ -129,19 +131,28 @@ const EventDetail = (props) => {
     // TODO: require email login to team up
 
     // Case where user is confirming an invite
+    let inviteFound = false;
     invites.forEach((invite) => {
       console.log("Checking invites");
       if (invite.data().partnerEmail === requestedPartner) {
         console.log("Found match");
-        confirmTeamUp(invite, props.docSnap.ref);
+        inviteFound = true;
+        confirmTeamUp(invite, props.docSnap);
         return;
       }
     });
 
-    // TODO: validate user
-    // Otherwise, invite a different user
-    createTeamUp(props.docSnap, requestedPartner);
+    // TODO: validate inputted address
+    // Otherwise, invite the requested user
+    if (!inviteFound) createTeamUp(props.docSnap, requestedPartner);
   };
+
+  //   const handleInviteList = () => {
+  //     // Save invites to state, if any
+  //     getTeamUpInvites().then((inviteQSnap) => {
+  //         if (!inviteQSnap.empty) setInvites(inviteQSnap.docs);
+  //       });
+  //   }
 
   return (
     <>
@@ -227,6 +238,7 @@ const EventDetail = (props) => {
           type="text"
           autoComplete="email"
           placeholder="Team-up?"
+          //   onFocus={handleInviteList}
         />
         <datalist id="teamList">
           {invites.map((invite, i) => (

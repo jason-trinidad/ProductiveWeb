@@ -13,85 +13,147 @@ const db = admin.firestore();
 // });
 
 exports.requestTeamUp = functions.firestore
-  .document("Users/{userId}/Requests/{requestId}")
+  .document("Users/{userId}/TeamUps/{teamUpId}")
   .onCreate(async (snap, context) => {
     const contents = snap.data();
 
-    // functions.logger.info(context, {structuredData: true});
+    const originator = await admin.auth().getUser(context.params.userId);
+    const responder = await admin.auth().getUserByEmail(contents.partnerEmail);
 
-    const partner = await admin.auth().getUserByEmail(contents.partnerEmail);
-    const requester = await admin.auth().getUser(context.params.userId);
-
-    db.collection(`Users/${partner.uid}/Invites`).add({
-      partnerEmail: requester.email,
-      partnerRequestId: context.params.requestId,
-    });
-  });
-
-exports.confirmTeamUp = functions.firestore
-  .document("Users/{userId}/Ongoing/{ongoingId}")
-  .onCreate(async (snap, context) => {
-    const contents = snap.data();
-
-    if (contents.confirmer) {
-      const partner = await admin.auth().getUserByEmail(contents.partnerEmail);
-      const confirmer = await admin.auth().getUser(context.params.userId);
-
-      const originalRequest = await db
-        .doc(`Users/${partner.uid}/Requests/${contents.partnerRequestId}`)
-        .get();
-
-      // Make an "ongoing" team-up in the partner user's directory
-      const requesterOngoingRef = await db
-        .collection(`Users/${partner.uid}/Ongoing`)
+    if (contents.isRequester) {
+      const responderTeamUpRef = await db
+        .collection(`Users/${responder.uid}/TeamUps`)
         .add({
-          confirmer: false,
-          taskRef: originalRequest.data().taskRef,
-          partnerOngoingRef: snap.ref,
-          partnerEmail: confirmer.email,
-          selfCompletedToday: false,
-          streak: 0,
-          updatedToday: false,
+          isConfirmed: false,
+          isRequester: false,
+          partnerEmail: originator.email,
+          partnerTeamUpRef: snap.ref,
+          taskRef: null,
+          lastCompletion: null,
+          streak: null,
+          lastStreakUpdate: null,
         });
-
-      await db
-        .doc(`Users/${confirmer.uid}/Ongoing/${context.ongoingId}`)
-        .update({
-          confirmer: contents.confirmer,
-          taskRef: contents.taskRef,
-          partnerOngoingRef: requesterOngoingRef,
-          partnerEmail: contents.partnerEmail,
-          selfCompletedToday: contents.selfCompletedToday,
-          streak: contents.streak,
-          updatedToday: false,
-        });
-
-      // Connect the requester's task with their new TeamUp doc
-      await db.doc(originalRequest.data().taskRef.path).update({
-        teamUpRef: requesterOngoingRef,
-      });
-
-      // Delete original request
-      originalRequest.delete();
     }
   });
 
-exports.checkStreakCompletion = functions.firestore
-  .document("Users/{userId}/Ongoing/{ongoingId}")
+exports.handleTeamUp = functions.firestore
+  .document("Users/{userId}/TeamUps/{teamUpId}")
   .onUpdate(async (change, context) => {
-    const contents = change.after.data();
-    const partnerContents = await db.doc(contents.teamUpRef.path).get();
+    const beforeData = change.before.data();
+    const afterData = change.after.data();
 
-    if (contents.selfCompletedToday && partnerContents.selfCompletedToday && !contents.updatedToday) {
-        // TODO: try updating ref directly
-        await db.doc(change.after.ref.path).update({
-            streak: contents.streak + 1,
-            updatedToday: true,
-        })
+    // On team up confirmation, update requester TeamUp doc
+    if (
+      !afterData.isRequester &&
+      !beforeData.isConfirmed &&
+      afterData.isConfirmed
+    ) {
+      await db.doc(afterData.partnerTeamUpRef.path).update({
+        isConfirmed: true,
+        partnerTeamUpRef: change.after.ref,
+        streak: 0,
+      });
+    }
 
-        await db.doc(contents.teamUpRef.path).update({
-            streak: contents.streak + 1,
-            updatedToday: true,
-        })
+    // Handle streak completion. Nested conditions to avoid unecessary function/API calls
+    if (afterData.isConfirmed) {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      let lastStreakUpdate;
+      if (afterData.lastStreakUpdate === null) {
+        lastStreakUpdate = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      } else {
+        lastStreakUpdate = afterData.lastStreakUpdate.toDate();
+      }
+
+      if (lastStreakUpdate < today.getTime()) {
+        if (afterData.lastCompletion !== null) {
+          const lastCompletionDate = new Date( // TODO: locale strings may work for this. Unsure about time zones
+            afterData.lastCompletion.toDate().getFullYear(),
+            afterData.lastCompletion.toDate().getMonth(),
+            afterData.lastCompletion.toDate().getDate()
+          );
+          if (lastCompletionDate.getTime() === today.getTime()) {
+            const partnerTeamUpDoc = await db
+              .doc(afterData.partnerTeamUpRef.path)
+              .get();
+            if (partnerTeamUpDoc.data().lastCompletion === null) return;
+            const partnerLastCompletionDate = new Date(
+              partnerTeamUpDoc.data().lastCompletion.toDate().getFullYear(),
+              partnerTeamUpDoc.data().lastCompletion.toDate().getMonth(),
+              partnerTeamUpDoc.data().lastCompletion.toDate().getDate()
+            );
+            if (partnerLastCompletionDate.getTime() === today.getTime()) {
+              const prevStreak = afterData.streak;
+              await db.doc(change.after.ref.path).update({
+                streak: prevStreak + 1,
+                lastStreakUpdate: new Date(),
+              });
+              await db.doc(afterData.partnerTeamUpRef.path).update({
+                streak: prevStreak + 1,
+                lastStreakUpdate: new Date(),
+              });
+            }
+          }
+        }
+      }
     }
   });
+
+// exports.checkStreakCompletion = functions.firestore
+//   .document("Users/{userId}/Ongoing/{ongoingId}")
+//   .onUpdate(async (change, context) => {
+//     const contents = change.after.data();
+//     const partnerContents = await db.doc(contents.teamUpRef.path).get();
+
+//     if (contents.lastCompletion && partnerContents.lastCompletion && !contents.updatedToday) {
+//         // TODO: try updating ref directly
+//         await db.doc(change.after.ref.path).update({
+//             streak: contents.streak + 1,
+//             updatedToday: true,
+//         })
+
+//         await db.doc(contents.teamUpRef.path).update({
+//             streak: contents.streak + 1,
+//             updatedToday: true,
+//         })
+//     }
+//   });
+
+// exports.handleTeamUp = functions.firestore
+//   .document("Users/{userId}/TeamUps/{teamUpId}")
+//   .onWrite(async (change, context) => {
+//     const originator = await admin.auth().getUser(context.params.userId);
+//     const responder = await admin
+//       .auth()
+//       .getUserByEmail(change.after.data().partnerEmail);
+
+//     // Create unisConfirmed TeamUp doc in responder's directory
+//     // TODO: send an email if "responder" is not in DB
+//     if (
+//       !change.before.exists &&
+//       !change.after.data().isConfirmed &&
+//       change.after.data().isRequester
+//     ) {
+//       //   functions.logger.info("Sensed teamUp initiation", {
+//       //     structuredData: true,
+//       //   });
+
+//       const responderTeamUpRef = await db
+//         .collection(`Users/${responder.uid}/TeamUps`)
+//         .add({
+//           isConfirmed: false,
+//           isRequester: false,
+//           partnerEmail: originator.email,
+//           partnerTeamUpRef: change.after.ref,
+//           taskRef: null,
+//           lastCompletion: null,
+//           streak: null,
+//         });
+
+//       await db
+//         .doc(change.after.ref)
+//         .update({ partnerTeamUpRef: responderTeamUpRef });
+//     }
+//   });

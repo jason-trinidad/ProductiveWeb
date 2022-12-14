@@ -46,6 +46,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // Cloud function removing old anons ("time-to-live" may do this!)
 // Look into build tools (incremental builds, FB emulators)
 // Add Redux back in to track calendar state (fewer re-renders, fewer document listeners?)
+//// Performance metrics: initial load time, number of freezes, memory usage...
 // Refactor (e.g. clean up App.js, standardize cases, map() -> forEach(), when to use anon functions in setState?, 
     // refactor db interaction, function naming conventions, dedicated skip initial render hook)
     // Is there a way to write docs for each function using comments?

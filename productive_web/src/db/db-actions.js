@@ -96,8 +96,6 @@ export const remove = async (toRemove) => {
 export const reorder = async (dragId, source, destination) => {
   const { tasks } = await getAllTasks();
 
-  console.log("Source: " + source + ", Dest: " + destination);
-
   // Set range of the list indices to be changed, as their direction of change
   const start = destination > source ? source : destination;
   const end = destination > source ? destination : source;
@@ -124,59 +122,55 @@ export const reorder = async (dragId, source, destination) => {
 
 export const createTeamUp = async (doc, email) => {
   const user = auth.currentUser;
-  const requestStore = "Users/" + user.uid + "/Requests";
-  await addDoc(collection(db, requestStore), {
+  const requestStore = "Users/" + user.uid + "/TeamUps";
+  const teamUpRef = await addDoc(collection(db, requestStore), {
+    isConfirmed: false,
+    isRequester: true,
     partnerEmail: email,
+    partnerTeamUpRef: null,
     taskRef: doc.ref,
+    lastCompletion: doc.data().isDone ? new Date() : null,
+    streak: null,
+    lastStreakUpdate: null,
   });
+
+  updateDoc(doc.ref, { teamUpRef: teamUpRef });
 };
 
 export const getTeamUpInvites = () => {
   const user = auth.currentUser;
-  const inviteStore = "Users/" + user.uid + "/Invites";
-  const q = query(collection(db, inviteStore));
+  const teamUpStore = "Users/" + user.uid + "/TeamUps";
+  const q = query(
+    collection(db, teamUpStore),
+    where("isConfirmed", "==", false),
+    where("isRequester", "==", false)
+  );
   return getDocs(q);
 };
 
-export const confirmTeamUp = (invite, taskRef) => {
-  console.log("Creating ongoing");
-  const user = auth.currentUser;
-  const ongoingStore = "Users/" + user.uid + "/Ongoing";
-  const newOngoing = doc(collection(db, ongoingStore));
-
-  const batch = writeBatch(db);
-  batch.set(newOngoing, {
-    confirmer: true,
-    taskRef: taskRef,
-    partnerEmail: invite.data().partnerEmail,
-    partnerRequestId: invite.data().partnerRequestId,
-    selfCompletedToday: false, // TODO: actually check
-    streak: 0,
-    updatedToday: false,
-  });
-
-  batch.update(taskRef, {
-    teamUpRef: newOngoing,
-  });
-
-  batch.delete(invite.ref);
-
-  batch.commit();
+export const confirmTeamUp = async (invite, task) => {
+  await updateDoc(invite.ref, { isConfirmed: true, streak: 0, taskRef: task.ref })
+  await updateDoc(task.ref, { teamUpRef: invite.ref })
 };
 
 export const getStreak = async (task) => {
   if (task.data().teamUpRef) {
     const snap = await getDoc(task.data().teamUpRef);
-    return snap.empty ? null : snap.data().streak;
+    return snap.data().streak;
   }
 
   return;
 };
 
 export const toggleDone = (doc) => {
-  // Update TeamUp doc if it exists
-  if (doc.data().teamUpRef)
-    updateDoc(doc.data().teamUpRef, { selfCompletedToday: !doc.data().isDone });
+  // Update TeamUp if relevant
+  if (doc.data().teamUpRef) {
+    if (!doc.data().isDone) {
+      updateDoc(doc.data().teamUpRef, { 
+        lastCompletion: new Date(),
+      });
+    }
+  }
 
   updateDoc(doc.ref, { isDone: !doc.data().isDone });
 };
