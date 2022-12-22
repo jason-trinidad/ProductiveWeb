@@ -3,3 +3,25 @@
     margin-bottom: -1px;
     margin-left: -1px;
 }
+
+.day {
+    grid-area: day;
+    display: flex;
+    flex-direction: column;
+}
+
+.day-container {
+    display: grid;
+    flex-grow: 1;
+    grid-template-rows: minmax(0, 1fr), minmax(0, 9fr);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 
+        "date"
+        "day"
+    ;
+}
+
+.date {
+    grid-area: date;
+    text-align: center;
+}

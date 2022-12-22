@@ -1,5 +1,6 @@
 import React from "react";
-import "./DateBar.css";
+
+import * as settings from "./cal-settings"
 
 const DateBar = (props) => {
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -12,13 +13,15 @@ const DateBar = (props) => {
   today.setMilliseconds(0);
 
   return (
-    <div className={props.className}>
-      {props.dates.map((date) => (
+    <div className={props.className} style={{gridTemplateColumns: `repeat(${settings.displayDays}, minmax(0, 1fr))`}}>
+      {props.dates.map((date, i) => (
         <h3
           key={date}
           style={{
             backgroundColor:
               date.getTime() === today.getTime() ? "lightgrey" : "transparent",
+            gridArea: `${1} / ${i +1} / ${2} / ${i + 2}`,
+            margin: 0,
           }}
         >
           {dayNames[date.getDay()] +

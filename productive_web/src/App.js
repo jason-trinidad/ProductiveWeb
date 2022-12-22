@@ -31,13 +31,14 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 //// Implement repeats
 //// Add row of dates √
 //// Make calendar scrollable √
-//// Fix drop-time math
+//// Fix drop-time math √
 //// Prettify
 // Deadline
 // Team up
 //// Create request √
 //// Create invite √
-//// 
+//// Trigger confirmation √
+//// Increment streak √
 // Streak
 // Change hour-column to AM/PM times √
 // Style (notification bar, login status)
@@ -52,23 +53,27 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
     // Is there a way to write docs for each function using comments?
 // Time budgets
 // Desktop push notifications
+// Create repeats for current-day on backend for push notifications
+// Archive "done" tasks at midnight
 // Indents (maybe switch to/extend Atlassian's tree framework for list)
 // Add Outlook
 // Populate from Google Tasks+Calendar / Apple Reminders+Calendar
-// When dragging over calendar, drag in 5 min "steps" [kind of fixed with dateline. Intend to resolve with new DND scheme]
 // Solution for finding team up if no friends (random names? "Make available to team up" option? Matchmaking?)
 // (If not fixed:) save value of active input before leaving page [could do this in useEffect return statement]
+// Clean up dates in EventDetail
+// Look at trade-off, massive # divs vs many grid rows, get rid of "DateGrid"
 // Undo?
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
 // Input on short click, drag/drop on long clicks
 // Offline support
 // 5 min task section (drag or tag task as 5 min, shows in window above List. No nesting, copied from List)
+// When dragging over calendar, drag in 5 min "steps" [kind of fixed with dateline. Intend to resolve with new DND scheme]
 
 function App() {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [mouseCoords, setMouseCoords] = useState({});
-  const ref = useRef(); // Forwarding ref to datefield
+  const ref = useRef(); // Ref for locating date grid
   // TODO: change to Redux (?)
   const [calDatesDisplayed, setCalDatesDisplayed] = useState([]);
 
@@ -108,9 +113,7 @@ function App() {
       return null;
     }
 
-    const dfDims = { x: ref.current.clientWidth, y: ref.current.clientHeight };
-
-    return getDateTime(mouseCoords, dfOrigin, dfDims, calDatesDisplayed[0]);
+    return getDateTime(ref, {pageX: mouseCoords.x, pageY: mouseCoords.y}, calDatesDisplayed[0]);
   };
 
   const dragEndHandler = (result) => {

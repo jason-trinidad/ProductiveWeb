@@ -3,17 +3,18 @@ import React from "react";
 import "./DateGrid.css";
 import * as settings from "./cal-settings";
 
-const DateGrid = (props) => {
+export const DateGrid = React.forwardRef((props, ref) => {
   const days = Array.from({ length: settings.displayDays }, (x, i) => i);
   const hours = Array.from({ length: 24 }, (x, i) => i);
-
   return (
     <div
       className={props.className}
-      style={{ display: "flex" }}
+      ref={ref}
+      // style={{ height: settings.hourHeight * 24 - 24 }}
+      onDrop={props.onDrop}
     >
       {days.map((day) => (
-        <div key={day} style={{display: "flex", flexDirection: "column", flexGrow: 1}}>
+        <div key={day} className="day">
           {hours.map((hour) => (
             <div
               className="hour"
@@ -25,6 +26,4 @@ const DateGrid = (props) => {
       ))}
     </div>
   );
-};
-
-export default DateGrid;
+});

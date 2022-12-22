@@ -6,13 +6,14 @@ import Event from "./Event";
 import "./Day.css";
 import * as settings from "./cal-settings";
 import { auth, db } from "../../db/db";
+import { recordDate } from "../../db/db-actions";
 
 const Day = (props) => {
   const [eventList, setEventList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [detachListener, setDetachListener] = useState(null);
 
-  const listen = (user) => {
+  const taskListener = (user) => {
     const start = props.date;
     const end = new Date(
       start.getFullYear(),
@@ -33,7 +34,6 @@ const Day = (props) => {
         ? setEventList(() => [])
         : setEventList(querySnapshot.docs);
     });
-    console.log("Attached listener");
 
     return unsub;
   };
@@ -45,7 +45,9 @@ const Day = (props) => {
       // Listen for auth state changes. If not logged in, log in anonymously
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          const unsub = listen(user);
+          recordDate(props.date);
+
+          const unsub = taskListener(user);
           setDetachListener(() => () => unsub());
         }
       });
@@ -54,7 +56,6 @@ const Day = (props) => {
     return () => {
       if (detachListener) {
         detachListener();
-        console.log("Detached listener");
       }
     };
   }, [isInitialRender]);
@@ -69,8 +70,7 @@ const Day = (props) => {
       style={{
         gridTemplateRows: `repeat(${numRows}, 1fr)`,
         gridTemplateColumns: "1fr",
-        height: dayHeight + 24,
-        marginTop: 8,
+        height: dayHeight - 24, // correcting for grid margin
       }}
     >
       {eventList.map((docSnap, i) => (

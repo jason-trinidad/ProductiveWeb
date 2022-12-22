@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Draggable } from "react-beautiful-dnd";
 
 import styles from "./TaskItem.module.css";
@@ -8,6 +8,10 @@ import * as dbActions from "../../db/db-actions";
 const TaskItem = (props) => {
   const [enteredTitle, setEnteredTitle] = useState(props.data.title);
   const taskInfo = props.data;
+
+  useEffect(() => {
+    setEnteredTitle(props.data.title)
+  }, [props.data.title])
 
   // Handle keyboard shortcuts
   const keyShortsHandler = (event) => {

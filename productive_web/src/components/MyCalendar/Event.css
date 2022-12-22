@@ -5,18 +5,16 @@
     z-index: 100;
     display: flex;
     flex-direction: column;
+    /* margin: -25 -25 0 0; Why no effect? */
 }
 
 .edge {
-    border-top: 3px solid transparent;
-    margin-top: -2px;
+    border: 1px solid transparent;
     cursor: ns-resize;
 }
 
-.event-detail {
-    background-color: tan;
-    /* grid-column: 1 / 2; */
+.description{
+    font-size: 14;
+    overflow-x: hidden;
     justify-self: center;
-    z-index: 101;
-    box-shadow: 10px 5px 5px black;
 }

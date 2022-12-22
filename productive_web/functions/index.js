@@ -1,8 +1,9 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const { collection, query, getDocs, where } = require("firebase/firestore");
 admin.initializeApp();
 
-const db = admin.firestore();
+const fs = admin.firestore();
 
 // // Create and deploy your first functions
 // // https://firebase.google.com/docs/functions/get-started
@@ -21,7 +22,7 @@ exports.requestTeamUp = functions.firestore
     const responder = await admin.auth().getUserByEmail(contents.partnerEmail);
 
     if (contents.isRequester) {
-      const responderTeamUpRef = await db
+      const responderTeamUpRef = await fs
         .collection(`Users/${responder.uid}/TeamUps`)
         .add({
           isConfirmed: false,
@@ -48,7 +49,7 @@ exports.handleTeamUp = functions.firestore
       !beforeData.isConfirmed &&
       afterData.isConfirmed
     ) {
-      await db.doc(afterData.partnerTeamUpRef.path).update({
+      await fs.doc(afterData.partnerTeamUpRef.path).update({
         isConfirmed: true,
         partnerTeamUpRef: change.after.ref,
         streak: 0,
@@ -75,7 +76,7 @@ exports.handleTeamUp = functions.firestore
             afterData.lastCompletion.toDate().getDate()
           );
           if (lastCompletionDate.getTime() === today.getTime()) {
-            const partnerTeamUpDoc = await db
+            const partnerTeamUpDoc = await fs
               .doc(afterData.partnerTeamUpRef.path)
               .get();
             if (partnerTeamUpDoc.data().lastCompletion === null) return;
@@ -86,11 +87,11 @@ exports.handleTeamUp = functions.firestore
             );
             if (partnerLastCompletionDate.getTime() === today.getTime()) {
               const prevStreak = afterData.streak;
-              await db.doc(change.after.ref.path).update({
+              await fs.doc(change.after.ref.path).update({
                 streak: prevStreak + 1,
                 lastStreakUpdate: new Date(),
               });
-              await db.doc(afterData.partnerTeamUpRef.path).update({
+              await fs.doc(afterData.partnerTeamUpRef.path).update({
                 streak: prevStreak + 1,
                 lastStreakUpdate: new Date(),
               });
@@ -101,59 +102,54 @@ exports.handleTeamUp = functions.firestore
     }
   });
 
-// exports.checkStreakCompletion = functions.firestore
-//   .document("Users/{userId}/Ongoing/{ongoingId}")
-//   .onUpdate(async (change, context) => {
-//     const contents = change.after.data();
-//     const partnerContents = await db.doc(contents.teamUpRef.path).get();
+  // Done in back-end vs Day bc of listener execution order
+  exports.createRepeatInstances = functions.firestore
+    .document("/Users/{userId}/Repeats/{repeatId}")
+    .onCreate(async (snap, context) => {
+      const repeat = {...snap.data()};
+      // Query for relevant dates
+      const dateStore = "Users/" + context.params.userId + "/Dates";
+      const dates = await fs.collection(dateStore).where("dateMSecs", ">", snap.data().repeatStartMSecs).get();
+      functions.logger.info(dates.empty, {structuredData: true});
 
-//     if (contents.lastCompletion && partnerContents.lastCompletion && !contents.updatedToday) {
-//         // TODO: try updating ref directly
-//         await db.doc(change.after.ref.path).update({
-//             streak: contents.streak + 1,
-//             updatedToday: true,
-//         })
+      // Check relevant dates to see if task has been created for this repeat.
+      dates.forEach(async (x) => {
+        const date = {...x.data()};
+        const jsDate = new Date(date.date);
 
-//         await db.doc(contents.teamUpRef.path).update({
-//             streak: contents.streak + 1,
-//             updatedToday: true,
-//         })
-//     }
-//   });
+        functions.logger.info(repeat.repeatVal.includes(jsDate.getDay() - 1)
+          && !date.repeatRefs.includes(snap.ref), {structuredData: true});
 
-// exports.handleTeamUp = functions.firestore
-//   .document("Users/{userId}/TeamUps/{teamUpId}")
-//   .onWrite(async (change, context) => {
-//     const originator = await admin.auth().getUser(context.params.userId);
-//     const responder = await admin
-//       .auth()
-//       .getUserByEmail(change.after.data().partnerEmail);
+        // If date is eligible for a repeated task, and this repeat has not yet been fulfilled, create a new task
+        if (repeat.repeatVal.includes(jsDate.getDay() - 1)
+            && !date.repeatRefs.includes(snap.ref)) {
+          functions.logger.info("Date is eligible", {structuredData: true});
 
-//     // Create unisConfirmed TeamUp doc in responder's directory
-//     // TODO: send an email if "responder" is not in DB
-//     if (
-//       !change.before.exists &&
-//       !change.after.data().isConfirmed &&
-//       change.after.data().isRequester
-//     ) {
-//       //   functions.logger.info("Sensed teamUp initiation", {
-//       //     structuredData: true,
-//       //   });
-
-//       const responderTeamUpRef = await db
-//         .collection(`Users/${responder.uid}/TeamUps`)
-//         .add({
-//           isConfirmed: false,
-//           isRequester: false,
-//           partnerEmail: originator.email,
-//           partnerTeamUpRef: change.after.ref,
-//           taskRef: null,
-//           lastCompletion: null,
-//           streak: null,
-//         });
-
-//       await db
-//         .doc(change.after.ref)
-//         .update({ partnerTeamUpRef: responderTeamUpRef });
-//     }
-//   });
+          const donor = await fs.doc(repeat.taskToClone.path).get();
+          await fs.collection(`Users/${context.params.userId}/Tasks`).add({
+            ...donor.data(),
+            key: Math.random().toString(),
+            dragId: Math.random().toString(),
+            startTime: new Date(
+              jsDate.getFullYear(),
+              jsDate.getMonth(),
+              jsDate.getDate(),
+              donor.startTime.toDate().getHours(),
+              donor.startTime.toDate().getMinutes(),
+            ),
+            endTime: new Date(
+              jsDate.getFullYear(),
+              jsDate.getMonth(),
+              jsDate.getDate(),
+              donor.endTime.toDate().getHours(),
+              donor.endTime.toDate().getMinutes(),
+            ),
+            isDone: false,
+            isArchived: false,
+          })
+          
+          // Record repeat fulfillment in date doc
+          await fs.doc(x.ref).update({ repeatRefs: date.repeatRefs.push(snap.ref) });
+        } 
+      })
+    })

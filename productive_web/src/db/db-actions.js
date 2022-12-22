@@ -26,10 +26,6 @@ const createNewTask = (title = "", listIndex = 0) => ({
   startTime: null,
   endTime: null,
   deadline: null,
-  repeat_kind: null,
-  repeat_monthly_dates: [],
-  repeat_weekly_days: [],
-  repeat_time: null,
   isDone: false,
   isArchived: false,
 });
@@ -149,8 +145,12 @@ export const getTeamUpInvites = () => {
 };
 
 export const confirmTeamUp = async (invite, task) => {
-  await updateDoc(invite.ref, { isConfirmed: true, streak: 0, taskRef: task.ref })
-  await updateDoc(task.ref, { teamUpRef: invite.ref })
+  await updateDoc(invite.ref, {
+    isConfirmed: true,
+    streak: 0,
+    taskRef: task.ref,
+  });
+  await updateDoc(task.ref, { teamUpRef: invite.ref });
 };
 
 export const getStreak = async (task) => {
@@ -166,7 +166,7 @@ export const toggleDone = (doc) => {
   // Update TeamUp if relevant
   if (doc.data().teamUpRef) {
     if (!doc.data().isDone) {
-      updateDoc(doc.data().teamUpRef, { 
+      updateDoc(doc.data().teamUpRef, {
         lastCompletion: new Date(),
       });
     }
@@ -217,4 +217,47 @@ export const schedule = async (
     startTime: startTime,
     endTime: endTime,
   });
+};
+
+// Purpose of creating repeat docs is to have smaller pool to query for repeat purposes
+export const scheduleRepeat = async (task, repeatInfo) => {
+  // If repeat exists, update it
+  if (task.data().repeatRef) {
+    await updateDoc(task.data().repeatRef, {
+      repeatKind: repeatInfo.repeatKind,
+      repeatVal: repeatInfo.repeatVal,
+      repeatStart: task.data().startTime,
+      taskToClone: task.ref,
+    });
+  } else {
+    const user = auth.currentUser;
+    const repeatStore = "Users/" + user.uid + "/Repeats";
+    const repeats = collection(db, repeatStore);
+
+    const newRepeat = await addDoc(repeats, {
+      repeatKind: repeatInfo.repeatKind,
+      repeatVal: repeatInfo.repeatVal,
+      repeatStartMSecs: task.data().startTime.toDate().getTime(),
+      taskToClone: task.ref,
+    });
+    await updateDoc(task.ref, {
+      repeatRef: newRepeat,
+    });
+  }
+};
+
+export const recordDate = async (date) => {
+  const user = auth.currentUser;
+  const dateStore = "Users/" + user.uid + "/Dates";
+  const ref = collection(db, dateStore);
+  const q = query(ref, where("dateMSecs", "==", date.getTime()));
+  const dateDocs = await getDocs(q);
+
+  if (dateDocs.empty) {
+    await addDoc(ref, {
+      date: date,
+      dateMSecs: date.getTime(),
+      repeatRefs: [],
+    });
+  }
 };

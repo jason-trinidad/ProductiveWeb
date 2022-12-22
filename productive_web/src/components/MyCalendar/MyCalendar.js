@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 
 import HourColumn from "./HourColumn";
 import DateBar from "./DateBar";
-import DateGrid from "./DateGrid";
+import { DateGrid } from "./DateGrid";
 import "./MyCalendar.css";
 import * as settings from "./cal-settings";
 import { getDateTime } from "./cal-utils";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../db/db";
-import DateField from "./DateField";
+import { DateField } from "./DateField";
 
 // TODO: add Redux back in for view state? (Not data state.)
 
@@ -22,6 +22,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
   });
   const [cursorTime, setCursorTime] = useState(new Date());
 
+  // Returns current week, starting with calendar's setting for first day of week
   const initialDisplayDates = () => {
     const now = new Date();
     const dates = Array.from(
@@ -30,7 +31,6 @@ export const MyCalendar = React.forwardRef((props, ref) => {
         new Date(
           now.getFullYear(),
           now.getMonth(),
-          // Gets week, starting with calendar's setting for first day of week
           now.getDate() - now.getDay() + settings.firstDisplayDay + i
         )
     );
@@ -49,20 +49,35 @@ export const MyCalendar = React.forwardRef((props, ref) => {
     props.updateParentDates(displayDates);
   }, [isInitialRender, displayDates]);
 
-  const getTimeFromCoords = (e) => {
-    const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
-    const dfDims = {
-      x: ref.current.clientWidth,
-      y: ref.current.clientHeight,
-    };
-    const mouseCoords = { x: e.pageX, y: e.pageY };
-    return getDateTime(mouseCoords, dfOrigin, dfDims, displayDates[0]);
-  };
+  // const getTimeFromCoords = (e) => {
+  //   // const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
+  //   // const dfDims = {
+  //   //   x: ref.current.clientWidth,
+  //   //   y: ref.current.clientHeight,
+  //   // };
+  //   // console.log("S height: " + ref.current.scrollHeight + ", S top: " + ref.current.scrollTop)
+  //   // console.log(ref.current.clientHeight)
+    
+  //   const scrollTop = ref.current.scrollTop;
+  //   const totalScroll = ref.current.scrollHeight;
+  //   const mouseData = { x: e.pageX, y: e.pageY - (ref.current.offsetTop + ref.current.clientTop) };
+  //   const xData = {
+  //     width: ref.current.clientWidth,
+  //     origin: ref.current.offsetLeft,
+  //   };
+  //   return getDateTime(
+  //     mouseData,
+  //     xData,
+  //     scrollTop,
+  //     totalScroll,
+  //     displayDates[0]
+  //   );
+  // };
 
   // Necessary to display time while dragging list item
-  const handleMouseOver = (e) => {
+  const handleCursorTime = (e) => {
     setTimeout(() => {
-      const newTime = getTimeFromCoords(e);
+      const newTime = getDateTime(ref, e, displayDates[0]);
 
       if (newTime.getTime() !== cursorTime.getTime()) {
         setDateLineObj({
@@ -78,22 +93,12 @@ export const MyCalendar = React.forwardRef((props, ref) => {
   const handleDragOver = (e) => {
     e.preventDefault();
 
-    const newTime = getTimeFromCoords(e);
-
-    if (newTime.getTime() !== cursorTime.getTime()) {
-      setDateLineObj({
-        ...dateLineObj,
-        top: e.pageY,
-      });
-      setCursorTime(() => newTime);
-    }
+    handleCursorTime(e);
   };
 
-  // TODO: why is drop firing so inconsistent?
   const handleDrop = (e) => {
-    console.log("Dropped");
     e.preventDefault();
-    const dropTime = getTimeFromCoords(e);
+    const dropTime = getDateTime(ref, e, displayDates[0]);
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
     let newStart;
     let newEnd;
@@ -138,7 +143,6 @@ export const MyCalendar = React.forwardRef((props, ref) => {
 
   return (
     <div id="calendar-container" className="calendar-container">
-      <div className="time-line" style={dateLineObj} />
       <div className="scroll-buttons">
         <button id="left-scroll" onClick={scrollCalendar}>
           {"<"}
@@ -150,22 +154,23 @@ export const MyCalendar = React.forwardRef((props, ref) => {
       <h3 className="time-readout">
         {cursorTime.toLocaleTimeString("en-US", { timeStyle: "short" })}
       </h3>
-      <DateBar className="date-bar" dates={displayDates} />
-      <div
-        ref={ref}
-        id="date-container"
-        className="date-container"
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        onMouseMove={handleMouseOver}
-      >
-        <HourColumn className="hour-column" />
-        <DateGrid className="date-grid" />
-        <DateField
-          className="date-field"
-          displayDates={displayDates}
-          dateOffset={dateOffset}
-        />
+      <div id="date-container" className="date-container">
+        <DateBar className="date-bar" dates={displayDates} />
+        <div className="hour-and-date" ref={ref}>
+          <div className="time-line" style={dateLineObj} />
+          <HourColumn className="hour-column"/>
+          <DateGrid
+            className="date-grid"
+          />
+          <DateField
+            className="date-field"
+            displayDates={displayDates}
+            dateOffset={dateOffset}
+            onDragOver={handleDragOver}
+            onMouseMove={handleCursorTime}
+            onDrop={handleDrop}
+          />
+        </div>
       </div>
     </div>
   );
