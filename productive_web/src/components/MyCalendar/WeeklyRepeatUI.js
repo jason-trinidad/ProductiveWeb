@@ -22,7 +22,7 @@ const WeeklyRepeatUI = (props) => {
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Label>Repeat every week on:</Form.Label>
-      <ToggleButtonGroup type="checkbox" value={value} onChange={handleChange} disabled={true}>
+      <ToggleButtonGroup type="checkbox" value={value} onChange={handleChange}>
         <ToggleButton variant="outline-primary" size="sm" id="Su" value={1}>
           S
         </ToggleButton>
@@ -45,7 +45,7 @@ const WeeklyRepeatUI = (props) => {
           S
         </ToggleButton>
       </ToggleButtonGroup>
-      <Button variant="primary mr-1" size="sm" type="submit" disabled={true}>
+      <Button variant="primary mr-1" size="sm" type="submit">
         {repeatExists ? "Update" : "Create"}
       </Button>
     </Form>

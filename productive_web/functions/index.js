@@ -1,6 +1,5 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
-const { collection, query, getDocs, where } = require("firebase/firestore");
 admin.initializeApp();
 
 const fs = admin.firestore();
@@ -102,54 +101,112 @@ exports.handleTeamUp = functions.firestore
     }
   });
 
-  // Done in back-end vs Day bc of listener execution order
-  exports.createRepeatInstances = functions.firestore
-    .document("/Users/{userId}/Repeats/{repeatId}")
-    .onCreate(async (snap, context) => {
-      const repeat = {...snap.data()};
-      // Query for relevant dates
-      const dateStore = "Users/" + context.params.userId + "/Dates";
-      const dates = await fs.collection(dateStore).where("dateMSecs", ">", snap.data().repeatStartMSecs).get();
-      functions.logger.info(dates.empty, {structuredData: true});
+// Done via function vs Day due to listener execution order
+// Create repeated instances of tasks for qualifying, existing dates
+exports.createRepeatInstances = functions.firestore
+  .document("/Users/{userId}/Repeats/{repeatId}")
+  .onCreate(async (snap, context) => {
+    const repeat = { ...snap.data() };
+    // Query for relevant dates
+    const dateStore = "Users/" + context.params.userId + "/Dates";
+    const dates = await fs
+      .collection(dateStore)
+      .where("dateMSecs", ">", snap.data().repeatStartMSecs)
+      .get();
+    if (!dates.empty) functions.logger.info(dates, { structuredData: true });
 
-      // Check relevant dates to see if task has been created for this repeat.
-      dates.forEach(async (x) => {
-        const date = {...x.data()};
-        const jsDate = new Date(date.date);
+    // Check relevant dates to see if task has been created for this repeat.
+    dates.forEach(async (x) => {
+      const dateData = { ...x.data() };
+      const jsDate = dateData.date.toDate();
 
-        functions.logger.info(repeat.repeatVal.includes(jsDate.getDay() - 1)
-          && !date.repeatRefs.includes(snap.ref), {structuredData: true});
+      // If date is eligible for a repeated task, and this repeat has not yet been fulfilled, create a new task
+      if (
+        repeat.repeatVal.includes(jsDate.getDay() + 1) &&
+        !dateData.repeatRefs.includes(snap.ref)
+      ) {
+        // Create the new (repeated) task
+        const donorSnap = await fs.doc(repeat.taskToClone.path).get();
+        const donor = { ...donorSnap.data() };
+        await fs.collection(`Users/${context.params.userId}/Tasks`).add({
+          ...donor,
+          key: Math.random().toString(),
+          dragId: Math.random().toString(),
+          startTime: new Date(
+            jsDate.getFullYear(),
+            jsDate.getMonth(),
+            jsDate.getDate(),
+            donor.startTime.toDate().getHours(),
+            donor.startTime.toDate().getMinutes()
+          ),
+          endTime: new Date(
+            jsDate.getFullYear(),
+            jsDate.getMonth(),
+            jsDate.getDate(),
+            donor.endTime.toDate().getHours(),
+            donor.endTime.toDate().getMinutes()
+          ),
+          isDone: false,
+          isArchived: false,
+        });
 
-        // If date is eligible for a repeated task, and this repeat has not yet been fulfilled, create a new task
-        if (repeat.repeatVal.includes(jsDate.getDay() - 1)
-            && !date.repeatRefs.includes(snap.ref)) {
-          functions.logger.info("Date is eligible", {structuredData: true});
+        // Record repeat fulfillment in date doc
+        await fs
+          .doc(x.ref)
+          .update({ repeatRefs: dateData.repeatRefs.push(snap.ref) });
+      }
+    });
+  });
 
-          const donor = await fs.doc(repeat.taskToClone.path).get();
-          await fs.collection(`Users/${context.params.userId}/Tasks`).add({
-            ...donor.data(),
-            key: Math.random().toString(),
-            dragId: Math.random().toString(),
-            startTime: new Date(
-              jsDate.getFullYear(),
-              jsDate.getMonth(),
-              jsDate.getDate(),
-              donor.startTime.toDate().getHours(),
-              donor.startTime.toDate().getMinutes(),
-            ),
-            endTime: new Date(
-              jsDate.getFullYear(),
-              jsDate.getMonth(),
-              jsDate.getDate(),
-              donor.endTime.toDate().getHours(),
-              donor.endTime.toDate().getMinutes(),
-            ),
-            isDone: false,
-            isArchived: false,
-          })
-          
-          // Record repeat fulfillment in date doc
-          await fs.doc(x.ref).update({ repeatRefs: date.repeatRefs.push(snap.ref) });
-        } 
-      })
-    })
+// Done via function vs Day due to listener execution order
+// Create repeated instances of tasks for new dates
+exports.createRepeatsOnNewDate = functions.firestore
+  .document("/Users/{userId}/Dates/{dateId}")
+  .onCreate(async (snap, context) => {
+    const dateData = { ...snap.data() };
+    const jsDate = date.date.toDate();
+    
+    // Query for relevant repeats
+    const repeatStore = "Users/" + context.params.userId + "/Repeats";
+    const repeats = await fs
+      .collection(repeatStore)
+      .where("repeatStartMSecs", "<", dateData.dateMSecs)
+      .where("repeatVal", "array-contains", jsDate.getDay() + 1)
+      .get();
+    if (!repeats.empty) functions.logger.info(repeats, { structuredData: true });
+
+    // If a repeat has not been copied, make a new instance
+    repeats.forEach(async (repeat) => {
+      if (!dateData.repeatRefs.includes(repeat.ref)) {
+        // Create the new (repeated) task
+        const donorSnap = await fs.doc(repeat.taskToClone.path).get();
+        const donor = { ...donorSnap.data() };
+        await fs.collection(`Users/${context.params.userId}/Tasks`).add({
+          ...donor,
+          key: Math.random().toString(),
+          dragId: Math.random().toString(),
+          startTime: new Date(
+            jsDate.getFullYear(),
+            jsDate.getMonth(),
+            jsDate.getDate(),
+            donor.startTime.toDate().getHours(),
+            donor.startTime.toDate().getMinutes()
+          ),
+          endTime: new Date(
+            jsDate.getFullYear(),
+            jsDate.getMonth(),
+            jsDate.getDate(),
+            donor.endTime.toDate().getHours(),
+            donor.endTime.toDate().getMinutes()
+          ),
+          isDone: false,
+          isArchived: false,
+        });
+
+        // Record repeat fulfillment in date doc
+        await fs
+          .doc(snap.ref)
+          .update({ repeatRefs: dateData.repeatRefs.push(snap.ref) });
+      }
+    });
+  });

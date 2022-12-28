@@ -30,7 +30,7 @@ const createNewTask = (title = "", listIndex = 0) => ({
   isArchived: false,
 });
 
-const getAllTasks = async (user = auth.currentUser) => {
+export const getAllTasks = async (user = auth.currentUser) => {
   const taskStore = "Users/" + user.uid + "/Tasks";
   const tasksQuery = query(collection(db, taskStore), orderBy("listIndex"));
   const tasks = await getDocs(tasksQuery);
@@ -177,12 +177,8 @@ export const toggleDone = (doc) => {
 
 // Migrate anon data to new signed-in user
 // TODO: move check for existing user here, to allow more general use of function
-export const migrate = async (prevUser, currUser) => {
-  // Get previous user's data
-  const { tasks } = await getAllTasks(prevUser);
-
-  // Add those tasks to the new user
-  const newRef = "Users/" + currUser.uid + "/Tasks";
+export const migrate = async (user, tasks) => {
+  const newRef = "Users/" + user.uid + "/Tasks";
   tasks.docs.map(
     async (task) => await addDoc(collection(db, newRef), task.data())
   );

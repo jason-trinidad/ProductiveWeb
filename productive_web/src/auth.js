@@ -1,7 +1,7 @@
 import { collection, getDocs, query } from "firebase/firestore";
 import { auth, db } from "./db/db";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { migrate } from "./db/db-actions";
+import { getAllTasks, migrate } from "./db/db-actions";
 
 const firstTimeLogin = async (uid) => {
   const taskPath = "Users/" + uid + "/Tasks"
@@ -12,6 +12,7 @@ const firstTimeLogin = async (uid) => {
 
 export const signInWithGoogle = async () => {
   const prevUser = auth.currentUser;
+  const { taskStore, tasks } = await getAllTasks(prevUser);
 
   const provider = new GoogleAuthProvider();
 
@@ -20,7 +21,7 @@ export const signInWithGoogle = async () => {
         // If first time Google login, copy anonymous data to Google login. TODO: delete anon account using cloud function
         try {
             if (await firstTimeLogin(result.user.uid) && prevUser.isAnonymous) {
-                migrate(prevUser, result.user)
+                migrate(result.user, tasks)
             };
         } catch (error) {
             console.log(error)

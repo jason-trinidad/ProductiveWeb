@@ -24,12 +24,12 @@ const app = initializeApp(firebaseConfig);
 
 // Auth
 export const auth = getAuth(app);
-// connectAuthEmulator(auth, "http://localhost:9099");
+connectAuthEmulator(auth, "http://localhost:9099");
 
 // DB
 export const db = getFirestore(app);
-// connectFirestoreEmulator(db, "localhost", 8080);
+connectFirestoreEmulator(db, "localhost", 8080);
 
 // Functions
 export const functions = getFunctions(app);
-// connectFunctionsEmulator(functions, "localhost", 5001);
+connectFunctionsEmulator(functions, "localhost", 5001);

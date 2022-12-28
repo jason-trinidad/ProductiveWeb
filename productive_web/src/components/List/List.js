@@ -2,11 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Droppable } from "react-beautiful-dnd";
 import { auth, db } from "../../db/db";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
+import { onAuthStateChanged } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
 import "./List.module.css";
-import { addFirstLine } from "../../db/db-actions";
 
 // Known bugs:
 // 1. Drop is a bit ratchety (i.e. jolts after a drop).
@@ -15,35 +14,43 @@ import { addFirstLine } from "../../db/db-actions";
 const List = () => {
   const [taskList, setTaskList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
+  const [unsub, setUnsub] = useState(null);
 
   const listen = (user) => {
     const ref = collection(db, "Users/" + user.uid + "/Tasks");
     const q = query(ref, orderBy("listIndex"));
-    const unsub = onSnapshot(q, (querySnapshot) => {
+    const u = onSnapshot(q, (querySnapshot) => {
       if (querySnapshot.empty) return;
-      setTaskList(() => querySnapshot.docs);
+      setTaskList(querySnapshot.docs);
     });
-    
-    return unsub;
+
+    return u;
   };
 
   useEffect(() => {
     if (isInitialRender) {
+      setIsInitialRender(false);
+
       // Listen for auth state changes. If not logged in, log in anonymously
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          listen(user);
+          const u = listen(user);
+          setUnsub(() => () => u());
         }
       });
-
-      setIsInitialRender(() => false);
     }
+
+    return () => {
+      if (unsub) {
+        unsub();
+      }
+    };
   }, [isInitialRender]);
 
   return (
     <>
       <Droppable droppableId="list">
-        {(provided, snapshot) => (
+        {(provided) => (
           <div
             className="list"
             ref={provided.innerRef}
@@ -55,7 +62,7 @@ const List = () => {
                 key={task.data().key}
                 draggableId={task.data().dragId}
                 index={index}
-                data={{ ...task.data() }} 
+                data={{ ...task.data() }}
               />
             ))}
             {provided.placeholder}

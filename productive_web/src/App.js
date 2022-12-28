@@ -45,6 +45,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // ---------------------------- MVP
 // Re-do date-grid. a) look better, b) align elements
 // Cloud function removing old anons ("time-to-live" may do this!)
+// Change migrate function to trigger cloud function that sets anon's tasks to new sign-in
 // Look into build tools (incremental builds, FB emulators)
 // Add Redux back in to track calendar state (fewer re-renders, fewer document listeners?)
 //// Performance metrics: initial load time, number of freezes, memory usage...
