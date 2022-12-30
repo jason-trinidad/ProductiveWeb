@@ -7,14 +7,16 @@ import "./MyCalendar.css";
 import * as settings from "./cal-settings";
 import { getDateTime } from "./cal-utils";
 import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../db/db";
+import { auth, db } from "../../db/db";
 import { DateField } from "./DateField";
+import { onAuthStateChanged } from "firebase/auth";
 
 // TODO: add Redux back in for view state? (Not data state.)
 
 export const MyCalendar = React.forwardRef((props, ref) => {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [displayDates, setDisplayDates] = useState([]);
+  const [detachAuthListener, setDetachAuthListener] = useState(null);
   const [dateOffset, setDateOffset] = useState(0);
   const [dateLineObj, setDateLineObj] = useState({
     color: "red",
@@ -34,6 +36,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
           now.getDate() - now.getDay() + settings.firstDisplayDay + i
         )
     );
+    
     setDisplayDates(() => dates);
   };
 
@@ -41,12 +44,24 @@ export const MyCalendar = React.forwardRef((props, ref) => {
     if (isInitialRender) {
       setIsInitialRender(() => false);
 
-      // Setup initial display dates
-      initialDisplayDates();
+      const u = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // Setup initial display dates
+          initialDisplayDates();
+        }
+      });
+
+      setDetachAuthListener(() => () => u());
     }
 
     // Keep parent up to date on dates displayed
     props.updateParentDates(displayDates);
+
+    return () => {
+      if (detachAuthListener !== null) {
+        detachAuthListener();
+      }
+    };
   }, [isInitialRender, displayDates]);
 
   // const getTimeFromCoords = (e) => {
@@ -57,7 +72,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
   //   // };
   //   // console.log("S height: " + ref.current.scrollHeight + ", S top: " + ref.current.scrollTop)
   //   // console.log(ref.current.clientHeight)
-    
+
   //   const scrollTop = ref.current.scrollTop;
   //   const totalScroll = ref.current.scrollHeight;
   //   const mouseData = { x: e.pageX, y: e.pageY - (ref.current.offsetTop + ref.current.clientTop) };
@@ -158,10 +173,8 @@ export const MyCalendar = React.forwardRef((props, ref) => {
         <DateBar className="date-bar" dates={displayDates} />
         <div className="hour-and-date" ref={ref}>
           <div className="time-line" style={dateLineObj} />
-          <HourColumn className="hour-column"/>
-          <DateGrid
-            className="date-grid"
-          />
+          <HourColumn className="hour-column" />
+          <DateGrid className="date-grid" />
           <DateField
             className="date-field"
             displayDates={displayDates}

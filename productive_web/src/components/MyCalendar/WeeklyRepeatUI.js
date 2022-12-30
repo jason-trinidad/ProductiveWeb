@@ -13,7 +13,8 @@ const WeeklyRepeatUI = (props) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    props.passRepeatData(value)};
+    props.passRepeatData(value);
+  };
 
   const handleChange = (val) => {
     setValue(val);

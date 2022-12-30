@@ -113,7 +113,6 @@ exports.createRepeatInstances = functions.firestore
       .collection(dateStore)
       .where("dateMSecs", ">", snap.data().repeatStartMSecs)
       .get();
-    if (!dates.empty) functions.logger.info(dates, { structuredData: true });
 
     // Check relevant dates to see if task has been created for this repeat.
     dates.forEach(async (x) => {
@@ -125,6 +124,7 @@ exports.createRepeatInstances = functions.firestore
         repeat.repeatVal.includes(jsDate.getDay() + 1) &&
         !dateData.repeatRefs.includes(snap.ref)
       ) {
+
         // Create the new (repeated) task
         const donorSnap = await fs.doc(repeat.taskToClone.path).get();
         const donor = { ...donorSnap.data() };
@@ -152,8 +152,8 @@ exports.createRepeatInstances = functions.firestore
 
         // Record repeat fulfillment in date doc
         await fs
-          .doc(x.ref)
-          .update({ repeatRefs: dateData.repeatRefs.push(snap.ref) });
+          .doc(x.ref.path)
+          .update({ repeatRefs: [...dateData.repeatRefs, snap.ref] });
       }
     });
   });
@@ -164,7 +164,7 @@ exports.createRepeatsOnNewDate = functions.firestore
   .document("/Users/{userId}/Dates/{dateId}")
   .onCreate(async (snap, context) => {
     const dateData = { ...snap.data() };
-    const jsDate = date.date.toDate();
+    const jsDate = dateData.date.toDate();
     
     // Query for relevant repeats
     const repeatStore = "Users/" + context.params.userId + "/Repeats";
@@ -173,13 +173,12 @@ exports.createRepeatsOnNewDate = functions.firestore
       .where("repeatStartMSecs", "<", dateData.dateMSecs)
       .where("repeatVal", "array-contains", jsDate.getDay() + 1)
       .get();
-    if (!repeats.empty) functions.logger.info(repeats, { structuredData: true });
 
     // If a repeat has not been copied, make a new instance
     repeats.forEach(async (repeat) => {
       if (!dateData.repeatRefs.includes(repeat.ref)) {
         // Create the new (repeated) task
-        const donorSnap = await fs.doc(repeat.taskToClone.path).get();
+        const donorSnap = await fs.doc(repeat.data().taskToClone.path).get();
         const donor = { ...donorSnap.data() };
         await fs.collection(`Users/${context.params.userId}/Tasks`).add({
           ...donor,
@@ -205,8 +204,8 @@ exports.createRepeatsOnNewDate = functions.firestore
 
         // Record repeat fulfillment in date doc
         await fs
-          .doc(snap.ref)
-          .update({ repeatRefs: dateData.repeatRefs.push(snap.ref) });
+          .doc(snap.ref.path)
+          .update({ repeatRefs: [...dateData.repeatRefs, snap.ref] });
       }
     });
   });

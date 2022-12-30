@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Draggable } from "react-beautiful-dnd";
+import { Draggable, Droppable } from "react-beautiful-dnd";
 
 import styles from "./TaskItem.module.css";
 import * as dbActions from "../../db/db-actions";

@@ -28,6 +28,7 @@ const createNewTask = (title = "", listIndex = 0) => ({
   deadline: null,
   isDone: false,
   isArchived: false,
+  repeatRef: null,
 });
 
 export const getAllTasks = async (user = auth.currentUser) => {
@@ -89,10 +90,9 @@ export const remove = async (toRemove) => {
 };
 
 // TODO: transaction?
-export const reorder = async (dragId, source, destination) => {
-  const { tasks } = await getAllTasks();
-
-  // Set range of the list indices to be changed, as their direction of change
+export const reorder = (tasks, dragId, source, destination) => {
+  tasks.forEach((task) => console.log(task.data()))
+  // Set range of the list indices to be changed and their direction of change
   const start = destination > source ? source : destination;
   const end = destination > source ? destination : source;
   const inc = start === source ? -1 : 1;
@@ -100,10 +100,10 @@ export const reorder = async (dragId, source, destination) => {
   const batch = writeBatch(db);
 
   // Start by assigning the destination's index to the originating task
-  batch.update(tasks.docs[source].ref, { listIndex: destination });
+  batch.update(tasks[source].ref, { listIndex: destination });
 
   // Change the list index for tasks between start and end of the change region
-  tasks.docs.map((task) => {
+  tasks.map((task) => {
     if (
       task.data().listIndex >= start &&
       task.data().listIndex <= end &&
@@ -218,7 +218,7 @@ export const schedule = async (
 // Purpose of creating repeat docs is to have smaller pool to query for repeat purposes
 export const scheduleRepeat = async (task, repeatInfo) => {
   // If repeat exists, update it
-  if (task.data().repeatRef) {
+  if (task.data().repeatRef !== null) {
     await updateDoc(task.data().repeatRef, {
       repeatKind: repeatInfo.repeatKind,
       repeatVal: repeatInfo.repeatVal,

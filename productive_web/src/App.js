@@ -3,7 +3,7 @@ import { DragDropContext } from "react-beautiful-dnd";
 import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
 import { reorder, addFirstLine, schedule } from "./db/db-actions";
-import List from "./components/List/List";
+import { List } from "./components/List/List";
 import { MyCalendar } from "./components/MyCalendar/MyCalendar";
 import { auth } from "./db/db";
 import "./App.css";
@@ -32,9 +32,9 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 //// Add row of dates √
 //// Make calendar scrollable √
 //// Fix drop-time math √
-//// Prettify
+//// Prettify √
 // Deadline
-// Team up
+// Team up √
 //// Create request √
 //// Create invite √
 //// Trigger confirmation √
@@ -43,7 +43,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // Change hour-column to AM/PM times √
 // Style (notification bar, login status)
 // ---------------------------- MVP
-// Re-do date-grid. a) look better, b) align elements
+// Re-do date-grid. a) look better, b) align elements √
 // Cloud function removing old anons ("time-to-live" may do this!)
 // Change migrate function to trigger cloud function that sets anon's tasks to new sign-in
 // Look into build tools (incremental builds, FB emulators)
@@ -67,6 +67,7 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
 // Input on short click, drag/drop on long clicks
+// Try out FireSQL in List
 // Offline support
 // 5 min task section (drag or tag task as 5 min, shows in window above List. No nesting, copied from List)
 // When dragging over calendar, drag in 5 min "steps" [kind of fixed with dateline. Intend to resolve with new DND scheme]
@@ -77,6 +78,7 @@ function App() {
   const ref = useRef(); // Ref for locating date grid
   // TODO: change to Redux (?)
   const [calDatesDisplayed, setCalDatesDisplayed] = useState([]);
+  const [tasksDisplayed, setTasksDisplayed] = useState([]);
 
   useEffect(() => {
     if (isInitialRender) {
@@ -127,11 +129,15 @@ function App() {
     }
 
     if (!destination) return;
-    reorder(draggableId, source.index, destination.index);
+    reorder(tasksDisplayed, draggableId, source.index, destination.index);
   };
 
   const updateCalDates = (dates) => {
     setCalDatesDisplayed(() => dates);
+  }
+
+  const updateTasksDisplayed = (tasks) => {
+    setTasksDisplayed(() => tasks);
   }
 
   return (
@@ -143,7 +149,7 @@ function App() {
         </div>
         <h2 className="list-title">List</h2>
         <div className="list-container">
-          <List />
+          <List updateParentTasks={updateTasksDisplayed} />
         </div>
         <div className="cal-container">
           <MyCalendar ref={ref} updateParentDates={updateCalDates} />

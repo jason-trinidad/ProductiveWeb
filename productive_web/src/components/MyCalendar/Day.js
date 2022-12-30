@@ -12,6 +12,7 @@ const Day = (props) => {
   const [eventList, setEventList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [detachListener, setDetachListener] = useState(null);
+  const [detachAuthListener, setDetachAuthListener] = useState(null);
 
   const taskListener = (user) => {
     const start = props.date;
@@ -43,7 +44,7 @@ const Day = (props) => {
       setIsInitialRender(() => false);
 
       // Listen for auth state changes. If not logged in, log in anonymously
-      onAuthStateChanged(auth, (user) => {
+      const u = onAuthStateChanged(auth, (user) => {
         if (user) {
           recordDate(props.date);
 
@@ -51,11 +52,17 @@ const Day = (props) => {
           setDetachListener(() => () => unsub());
         }
       });
+
+      setDetachAuthListener(() => () => u());
     }
 
     return () => {
-      if (detachListener) {
+      if (detachListener !== null) {
         detachListener();
+      }
+
+      if (detachAuthListener !== null) {
+        detachAuthListener();
       }
     };
   }, [isInitialRender]);
