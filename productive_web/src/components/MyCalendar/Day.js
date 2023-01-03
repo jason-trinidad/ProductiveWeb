@@ -9,9 +9,9 @@ import { auth, db } from "../../db/db";
 import { recordDate } from "../../db/db-actions";
 
 const Day = (props) => {
-  const [eventList, setEventList] = useState([]);
   const [isInitialRender, setIsInitialRender] = useState(true);
-  const [detachListener, setDetachListener] = useState(null);
+  const [eventList, setEventList] = useState([]);
+  const [detachTaskListener, setDetachTaskListener] = useState(null);
   const [detachAuthListener, setDetachAuthListener] = useState(null);
 
   const taskListener = (user) => {
@@ -48,8 +48,9 @@ const Day = (props) => {
         if (user) {
           recordDate(props.date);
 
-          const unsub = taskListener(user);
-          setDetachListener(() => () => unsub());
+          const unsubTasks = taskListener(user);
+
+          setDetachTaskListener(() => () => unsubTasks());
         }
       });
 
@@ -57,8 +58,8 @@ const Day = (props) => {
     }
 
     return () => {
-      if (detachListener !== null) {
-        detachListener();
+      if (detachTaskListener !== null) {
+        detachTaskListener();
       }
 
       if (detachAuthListener !== null) {

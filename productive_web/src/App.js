@@ -10,37 +10,8 @@ import "./App.css";
 import { signInWithGoogle } from "./auth";
 import { getDateTime } from "./components/MyCalendar/cal-utils";
 
-// TODO - add:
-// Edit √
-// Delete √
-// Style [first pass] √
-// Drag and drop √
-// Back-end [Firebase] √
-// Done button/styling √
-// Auth/users √
-// Deploy √
-// Add weekly calendar
-//// Create calendar template √
-//// Determine intended time from drop √
-//// Schedule task on drop √
-//// Create line/display showing time for scheduling √
-//// Add functionality for dates √
-//// Drag to reschedule √
-//// Drag to re-size event √
-//// Modal to show event details on click √
-//// Implement repeats
-//// Add row of dates √
-//// Make calendar scrollable √
-//// Fix drop-time math √
-//// Prettify √
+// TODO:
 // Deadline
-// Team up √
-//// Create request √
-//// Create invite √
-//// Trigger confirmation √
-//// Increment streak √
-// Streak
-// Change hour-column to AM/PM times √
 // Style (notification bar, login status)
 // ---------------------------- MVP
 // Re-do date-grid. a) look better, b) align elements √

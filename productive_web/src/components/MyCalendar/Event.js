@@ -6,10 +6,12 @@ import Popover from "react-bootstrap/Popover";
 import { dateToCSSGridRow } from "./cal-utils";
 import "./Event.css";
 import EventDetail from "./EventDetail";
+import { getDoc } from "firebase/firestore";
 
 const Event = (props) => {
+  const [isInitialRender, setIsInitialRender] = useState(true);
   const [isSelected, setIsSelected] = useState(false);
-  // const [formData, setFormData] = useState(null);
+  const [repeatDoc, setRepeatDoc] = useState(null);
   const startRow = dateToCSSGridRow(props.docSnap.data().startTime.toDate());
   const endRow = dateToCSSGridRow(props.docSnap.data().endTime.toDate());
   const rows = `${startRow} / ${endRow}`;
@@ -17,6 +19,22 @@ const Event = (props) => {
     .data()
     .startTime.toDate()
     .toLocaleTimeString("en-US", { timeStyle: "short" });
+
+  useEffect(() => {
+    (async () => {
+      if (props.docSnap.data().repeatRef && isInitialRender) {
+        setIsInitialRender(false);
+        const ref = props.docSnap.data().repeatRef;
+        const rep = await getDoc(ref);
+        // Store repeat info if event is part of repeat
+        if (
+          rep.data().repeatStartMSecs <
+          props.docSnap.data().startTime.toDate().getTime()
+        )
+          setRepeatDoc(rep);
+      }
+    })();
+  }, [isInitialRender]);
 
   const handleEventDragStart = (e) => {
     e.stopPropagation();
@@ -51,18 +69,7 @@ const Event = (props) => {
     e.dataTransfer.setData("text/plain", JSON.stringify(data));
   };
 
-  // const trackFormData = (data) => {
-  //   console.log("tracking")
-  //   setFormData({ ...data });
-  // };
-
   const updateEventData = (formData) => {
-    // schedule(
-    //   props.docSnap.data().dragId,
-    //   formData.startTime,
-    //   formData.endTime,
-    //   formData.title
-    // );
     if (formData.title) {
       update(props.docSnap, formData.title);
     } else if (formData.repeatKind) {
@@ -71,13 +78,8 @@ const Event = (props) => {
   };
 
   // Update the data if toggled
-  const handleToggle = (e) => {
-    setIsSelected((prev) => {
-      // if (formData !== null && prev) {
-      //   updateEventData();
-      // }
-      return !prev;
-    });
+  const handleToggle = () => {
+    setIsSelected((prev) => !prev);
   };
 
   return (
@@ -87,13 +89,16 @@ const Event = (props) => {
       onToggle={handleToggle}
       overlay={
         <Popover id="popover-basic">
-            <EventDetail docSnap={props.docSnap} passFormData={updateEventData} />
+          <EventDetail docSnap={props.docSnap} repeatDoc={repeatDoc} passFormData={updateEventData} />
         </Popover>
       }
     >
       <div
         className="event"
-        style={{ gridRow: rows, boxShadow: isSelected ? "0px 2px 10px rgba(0,0,0,0.1)" : "" }}
+        style={{
+          gridRow: rows,
+          boxShadow: isSelected ? "0px 2px 10px rgba(0,0,0,0.1)" : "",
+        }}
         draggable={!isSelected}
         onDragStart={handleEventDragStart}
       >

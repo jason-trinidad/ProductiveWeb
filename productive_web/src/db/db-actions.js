@@ -217,14 +217,15 @@ export const schedule = async (
 
 // Purpose of creating repeat docs is to have smaller pool to query for repeat purposes
 export const scheduleRepeat = async (task, repeatInfo) => {
-  // If repeat exists, update it
+  // If repeat exists, do nothing (pending re-schedule implementation)
   if (task.data().repeatRef !== null) {
-    await updateDoc(task.data().repeatRef, {
-      repeatKind: repeatInfo.repeatKind,
-      repeatVal: repeatInfo.repeatVal,
-      repeatStart: task.data().startTime,
-      taskToClone: task.ref,
-    });
+    return;
+    // await updateDoc(task.data().repeatRef, {
+    //   repeatKind: repeatInfo.repeatKind,
+    //   repeatVal: repeatInfo.repeatVal,
+    //   repeatStart: task.data().startTime,
+    //   taskToClone: task.ref,
+    // });
   } else {
     const user = auth.currentUser;
     const repeatStore = "Users/" + user.uid + "/Repeats";
@@ -257,3 +258,5 @@ export const recordDate = async (date) => {
     });
   }
 };
+
+export const dltDoc = (docRef) => deleteDoc(docRef);

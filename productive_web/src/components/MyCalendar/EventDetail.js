@@ -11,16 +11,11 @@ import Button from "react-bootstrap/Button";
 
 import "./EventDetail.css";
 import WeeklyRepeatUI from "./WeeklyRepeatUI";
-import { FormGroup, Popover } from "react-bootstrap";
+import { Popover } from "react-bootstrap";
 
 const EventDetail = (props) => {
   const [invites, setInvites] = useState([]);
   const [streak, setStreak] = useState(null);
-
-  const startTime = props.docSnap.data().startTime.toDate();
-  const endTime = props.docSnap.data().endTime.toDate();
-  const isRepeated = props.docSnap.data().repeatRef !== null;
-
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [enteredTitle, setEnteredTitle] = useState(props.docSnap.data().title);
 
@@ -53,7 +48,6 @@ const EventDetail = (props) => {
   };
 
   const getRepeatData = (repeatVal) => {
-    if (!repeatVal.empty)
       props.passFormData({
         repeatKind: "week",
         repeatVal: repeatVal,
@@ -62,10 +56,6 @@ const EventDetail = (props) => {
 
   const titleChangeHandler = (e) => {
     setEnteredTitle(e.target.value);
-  };
-
-  const checkForLeadingZero = (str) => {
-    return str.length < 2 ? "0" + str : str;
   };
 
   // TODO: reset TeamUp, streak and rename function
@@ -94,6 +84,8 @@ const EventDetail = (props) => {
     if (!inviteFound) createTeamUp(props.docSnap, requestedPartner);
   };
 
+  console.log(props.repeatVal)
+
   return (
     <>
       <Popover.Header>
@@ -107,10 +99,9 @@ const EventDetail = (props) => {
       <Popover.Body>
         <WeeklyRepeatUI
           passRepeatData={getRepeatData}
-          isRepeated={isRepeated}
+          repeatDoc={props.repeatDoc}
         />
         <div style={{ border: "10px solid transparent" }}></div>
-        {/* Provide more UI response to user */}
         <Form onSubmit={handleTeamUpRequest}>
           <input
             id="teamUpEmail"
