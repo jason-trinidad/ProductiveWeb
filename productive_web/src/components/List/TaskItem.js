@@ -60,19 +60,8 @@ const TaskItem = (props) => {
     };
     e.dataTransfer.setData("text/plain", JSON.stringify(data));
   };
-
-  const handleDropBelow = (e) => {
-    console.log("triggered");
-    e.preventDefault();
-    e.stopPropagation();
-
-    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-    if (data.docPath !== props.snapshot.ref.path)
-      console.log(
-        data.docPath + " dropped below task #" + props.snapshot.data().title
-      );
-  };
-
+  
+// TODO: make IDs unique
   return (
     <div
       draggable={true}
@@ -99,7 +88,7 @@ const TaskItem = (props) => {
           </form>
         </div>
       </div>
-      <BelowSensor onDrop={handleDropBelow} />
+      <BelowSensor id={props.index} onDrop={props.handleDropBelow} />
     </div>
   );
 };

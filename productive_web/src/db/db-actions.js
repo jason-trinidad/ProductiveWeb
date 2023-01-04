@@ -18,7 +18,7 @@ import * as settings from "../components/MyCalendar/cal-settings";
 const createRandomKey = () => Math.random().toString();
 
 // New task template
-const createNewTask = (title = "", listIndex = 0) => ({
+const createNewTask = (title = "", listIndex = 0, indents = 0) => ({
   key: createRandomKey(), //TODO: consider. id from db entry, or keep internal keys?
   title: title,
   listIndex: listIndex,
@@ -28,7 +28,7 @@ const createNewTask = (title = "", listIndex = 0) => ({
   isDone: false,
   isArchived: false,
   repeatRef: null,
-  indents: 0,
+  indents: indents,
 });
 
 export const getAllTasks = async (user = auth.currentUser) => {
@@ -63,7 +63,10 @@ export const carriageReturn = async (prevDoc, prevTaskData) => {
 
   // Create a doc for the new task
   const newTask = doc(collection(db, taskStore));
-  batch.set(newTask, createNewTask("", prevDoc.data().listIndex + 1));
+  batch.set(
+    newTask,
+    createNewTask("", prevDoc.data().listIndex + 1, prevDoc.data().indents)
+  );
 
   batch.commit();
 };
@@ -89,31 +92,29 @@ export const remove = async (toRemove) => {
   batch.commit();
 };
 
-// TODO: transaction?
-export const reorder = (tasks, dragId, source, destination) => {
-  tasks.forEach((task) => console.log(task.data()))
-  // Set range of the list indices to be changed and their direction of change
-  const start = destination > source ? source : destination;
-  const end = destination > source ? destination : source;
-  const inc = start === source ? -1 : 1;
-
-  const batch = writeBatch(db);
-
-  // Start by assigning the destination's index to the originating task
-  batch.update(tasks[source].ref, { listIndex: destination });
+export const reorder = (tasks, source, lastChild, destination) => {
+  // (Inclusive) range of list indices to be changed, and their direction of change
+  const start = source < destination ? lastChild + 1 : destination + 1;
+  // console.log("Range to change starts at: #" + tasks[start].data().title);
+  const end = source < destination ? destination : source - 1;
+  // console.log("Range to change ends at: #" + tasks[end].data().title);
+  const inc =
+    source < destination
+      ? -1 * (lastChild - source + 1)
+      : lastChild - source + 1;
 
   // Change the list index for tasks between start and end of the change region
   tasks.map((task) => {
-    if (
-      task.data().listIndex >= start &&
-      task.data().listIndex <= end &&
-      task.data().dragId !== dragId
-    ) {
-      batch.update(task.ref, { listIndex: task.data().listIndex + inc });
+    if (task.data().listIndex >= start && task.data().listIndex <= end) {
+      updateAllRepeats(task, { listIndex: task.data().listIndex + inc });
     }
   });
 
-  batch.commit();
+  // Update indices for source and its children (if any)
+  for (let i = source; i <= lastChild; i++) {
+    console.log("Bound for index: " + (destination + 1 + (i - source)));
+    updateAllRepeats(tasks[i], { listIndex: destination + 1 + (i - source) });
+  }
 };
 
 export const createTeamUp = async (doc, email) => {
@@ -261,21 +262,57 @@ export const recordDate = async (date) => {
 
 export const dltDoc = (docRef) => deleteDoc(docRef);
 
-export const makeChild = (tasks, source, dest) => {
-  // Find dropped task's children
-  const droppedIndents = tasks[source].data().indents;
-  let lastChildIndex = source;
+export const updateAllRepeats = async (taskDoc, newProps) => {
+  let tasks = [];
+  if (taskDoc.data().repeatRef === null) {
+    tasks.push(taskDoc);
+  } else {
+    // Get all instances of a given repeat
+    const user = auth.currentUser;
+    const taskStore = "Users/" + user.uid + "/Tasks";
+    const q = query(
+      collection(db, taskStore),
+      where("repeatRef", "==", taskDoc.data().repeatRef)
+    );
 
-  for (let i = source + 1; i < tasks.length; i++) {
-    if (tasks[i].data().indents === droppedIndents) break;
+    const res = await getDocs(q);
+    tasks = [...res.docs];
+  }
+
+  // Update all
+  const batch = writeBatch(db);
+
+  tasks.forEach((task) => {
+    batch.update(task.ref, newProps);
+  });
+
+  await batch.commit();
+};
+
+export const orderBelow = async (tasks, source, dest, isChild) => {
+  console.log("Destination: " + dest)
+  // Find dropped task's children and adjust indents
+  const sourceOGIndents = tasks[source].data().indents;
+  const indentChange =
+    tasks[dest].data().indents - sourceOGIndents + (isChild ? 1 : 0);
+  let lastChildIndex;
+
+  for (let i = source; i < tasks.length; i++) {
+    if (i !== source && tasks[i].data().indents <= sourceOGIndents) break; // Returned to parent level
+
+    // Update indents, including repeats if any
+    const newIndents = tasks[i].data().indents + indentChange;
+    updateAllRepeats(tasks[i], { indents: newIndents });
+
+    // Store last child's index for re-ordering
     lastChildIndex = i;
-  };
+  }
 
-  console.log("Dropped task and children range from: " + source + " to: " + lastChildIndex);
-}
+  reorder(tasks, source, lastChildIndex, dest);
+};
 
 export const indent = async (docSnap, increment) => {
   await updateDoc(docSnap.ref, {
     indents: docSnap.data().indents + increment,
-  })
-}
+  });
+};

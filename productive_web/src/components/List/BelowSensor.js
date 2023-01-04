@@ -10,9 +10,10 @@ const BelowSensor = (props) => {
 
   return (
     <div
+      id={props.id}
       style={{
         minHeight: "10px",
-        backgroundColor: isDraggedOver ? "lightblue" : "transparent",
+        backgroundColor: isDraggedOver ? "lightgrey" : "transparent",
       }}
       onDragEnter={() => setIsDraggedOver(true)}
       onDragLeave={() => setIsDraggedOver(false)}

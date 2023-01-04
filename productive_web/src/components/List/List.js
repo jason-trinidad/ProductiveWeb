@@ -6,13 +6,12 @@ import {
   where,
   orderBy,
   onSnapshot,
-  getDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
 import "./List.module.css";
-import { makeChild } from "../../db/db-actions";
+import { orderBelow } from "../../db/db-actions";
 
 // Known bugs:
 // 1. Drop is a bit ratchety (i.e. jolts after a drop).
@@ -42,49 +41,9 @@ export const List = (props) => {
 
     // Invoke listener
     const u = onSnapshot(q, (querySnapshot) => {
-      // querySnapshot.docs.forEach(doc => console.log(doc.data()))
       querySnapshot.empty
         ? console.log("empty")
         : setTaskList(querySnapshot.docs);
-      // const now = new Date();
-
-      // if (querySnapshot.empty) return;
-
-      // // Key: Path to repeatRef. Value: index in querySnapshot.docs
-      // const mostRecentRepeat = {};
-      // const docsToKeep = [];
-
-      // // TODO: this is awful. FireSQL seems like a better solution.
-      // querySnapshot.docs.forEach((doc, index) => {
-      //   const snapData = doc.data();
-
-      //   // Find the earliest instance for each repeated task.
-      //   if (snapData.repeatRef !== null) {
-      //     const repPath = snapData.repeatRef.path;
-      //     if (repPath in mostRecentRepeat) {
-      //       const prevRep = querySnapshot.docs[mostRecentRepeat[repPath]];
-      //       if (
-      //         Math.abs(snapData.startTime.toDate().getTime() - now.getTime()) <
-      //         Math.abs(
-      //           prevRep.data().startTime.toDate().getTime() - now.getTime()
-      //         )
-      //       ) {
-      //         mostRecentRepeat[repPath] = index;
-      //       }
-      //     } else {
-      //       mostRecentRepeat[repPath] = index; // First time seeing this repeat
-      //     }
-      //   }
-      // });
-
-      // Compose an array of non-repeated and most recent repeated tasks, in order of listIndex
-      // querySnapshot.docs.forEach((doc, index) => {
-      //   if (doc.data().repeatRef === null || Object.values(mostRecentRepeat).includes(index)) {
-      //     docsToKeep.push(doc);
-      //   }
-      // });
-
-      // setTaskList(docsToKeep);
     });
 
     return u;
@@ -143,12 +102,37 @@ export const List = (props) => {
   const handleNewChild = async (e) => {
     e.preventDefault();
 
+    const tasks = filterList(taskList); 
+    const dest = Number(e.target.id);
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
-    // console.log(
-    //   data.docPath + " dropped on task #" + props.snapshot.data().title
-    // );
-    makeChild(filterList(taskList), data.startIndex, e.target.id);
-  }
+
+    if (data.docPath !== tasks[dest].ref.path)
+      orderBelow(
+        tasks,
+        data.startIndex,
+        dest,
+        true
+      );
+  };
+
+  const handleDropBelow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Split id to find index number
+
+    const tasks = filterList(taskList);
+    const dest = Number(e.target.id);
+    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+
+    if (data.docPath !== tasks[dest].ref.path)
+      orderBelow(
+        tasks,
+        data.startIndex,
+        dest,
+        false
+      );
+  };
 
   return (
     <div className="list">
@@ -161,7 +145,10 @@ export const List = (props) => {
           index={index}
           data={{ ...task.data() }}
           handleNewChild={handleNewChild}
-          maxIndent={index === 0 ? 0 : filterList(taskList)[index - 1].data().indents + 1}
+          handleDropBelow={handleDropBelow}
+          maxIndent={
+            index === 0 ? 0 : filterList(taskList)[index - 1].data().indents + 1
+          }
         />
       ))}
     </div>
