@@ -1,7 +1,6 @@
 .list {
-    display: flexbox;
+    display: flex;
     flex-direction: column;
     justify-content: center;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    overflow: auto;
 }

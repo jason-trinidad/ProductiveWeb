@@ -5,7 +5,7 @@
     justify-content: start;
     align-items: center;
     height: 40px; width: 350px;
-    margin: 4px auto;
+    /* margin: 4px auto; */
     border-width: .75px;
     border-style: none none groove none;
     outline: solid transparent;

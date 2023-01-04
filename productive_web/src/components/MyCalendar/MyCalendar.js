@@ -118,6 +118,7 @@ export const MyCalendar = React.forwardRef((props, ref) => {
     let newStart;
     let newEnd;
 
+    // Add case to detect taskItem. Maybe execute function passed by App?
     switch (data.obj) {
       case "event":
         newStart = dropTime;

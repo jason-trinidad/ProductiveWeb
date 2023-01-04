@@ -1,23 +1,31 @@
 import React, { useEffect, useState } from "react";
-import { Draggable } from "react-beautiful-dnd";
 
+import BelowSensor from "./BelowSensor";
 import styles from "./TaskItem.module.css";
 import * as dbActions from "../../db/db-actions";
+import Indent from "./Indent";
 
 // TODO: this should be a controlled element from the element with a listener so that it will update correctly
 const TaskItem = (props) => {
   const [enteredTitle, setEnteredTitle] = useState(props.data.title);
-  const taskInfo = props.data;
+  const taskData = props.snapshot.data();
+  const indents = Array.from({ length: taskData.indents }, (x, i) => i);
 
   useEffect(() => {
-    setEnteredTitle(props.data.title)
-  }, [props.data.title])
+    setEnteredTitle(props.data.title);
+  }, [props.data.title]);
 
   // Handle keyboard shortcuts
-  const keyShortsHandler = (event) => {
+  const keyShortsHandler = (e) => {
     // "Backspace delete" TaskItem from List
-    if (event.key === "Backspace" && event.target.value === "") {
+    if (e.key === "Backspace" && e.target.value === "") {
       dbActions.remove(props.snapshot);
+    } else if (e.key === "Tab" && e.shiftKey) {
+      e.preventDefault();
+      if (taskData.indents > 0) dbActions.indent(props.snapshot, -1);
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      if (taskData.indents < props.maxIndent) dbActions.indent(props.snapshot, 1);
     }
   };
 
@@ -33,38 +41,66 @@ const TaskItem = (props) => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    
-    dbActions.carriageReturn(props.snapshot, { index: props.index, title: enteredTitle })
+
+    dbActions.carriageReturn(props.snapshot, {
+      index: props.index,
+      title: enteredTitle,
+    });
   };
 
   const completionHandler = () => {
-    dbActions.toggleDone(props.snapshot)
+    dbActions.toggleDone(props.snapshot);
+  };
+
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    const data = {
+      docPath: props.snapshot.ref.path,
+      startIndex: props.index,
+    };
+    e.dataTransfer.setData("text/plain", JSON.stringify(data));
+  };
+
+  const handleDropBelow = (e) => {
+    console.log("triggered");
+    e.preventDefault();
+    e.stopPropagation();
+
+    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+    if (data.docPath !== props.snapshot.ref.path)
+      console.log(
+        data.docPath + " dropped below task #" + props.snapshot.data().title
+      );
   };
 
   return (
-    <Draggable draggableId={props.draggableId.toString()} index={props.index}>
-      {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-        >
-          <div className={taskInfo.isDone ? styles.completedTask : styles.task}>
-            <button onClick={completionHandler} />
-            <form onSubmit={submitHandler}>
-              <input
-                autoFocus
-                type="text"
-                value={enteredTitle}
-                onBlur={blurHandler}
-                onChange={titleChangeHandler}
-                onKeyDown={keyShortsHandler}
-              />
-            </form>
-          </div>
+    <div
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDrop={props.handleNewChild}
+      style={{ display: "flex", flexDirection: "column" }}
+    >
+      <div style={{ display: "flex" }}>
+        {indents.map((num, index) => (
+          <Indent key={index} />
+        ))}
+        <div className={taskData.isDone ? styles.completedTask : styles.task}>
+          <button onClick={completionHandler} />
+          <form onSubmit={submitHandler}>
+            <input
+              autoFocus
+              id={props.index}
+              type="text"
+              value={enteredTitle}
+              onBlur={blurHandler}
+              onChange={titleChangeHandler}
+              onKeyDown={keyShortsHandler}
+            />
+          </form>
         </div>
-      )}
-    </Draggable>
+      </div>
+      <BelowSensor onDrop={handleDropBelow} />
+    </div>
   );
 };
 

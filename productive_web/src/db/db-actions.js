@@ -20,7 +20,6 @@ const createRandomKey = () => Math.random().toString();
 // New task template
 const createNewTask = (title = "", listIndex = 0) => ({
   key: createRandomKey(), //TODO: consider. id from db entry, or keep internal keys?
-  dragId: createRandomKey(),
   title: title,
   listIndex: listIndex,
   startTime: null,
@@ -29,6 +28,7 @@ const createNewTask = (title = "", listIndex = 0) => ({
   isDone: false,
   isArchived: false,
   repeatRef: null,
+  indents: 0,
 });
 
 export const getAllTasks = async (user = auth.currentUser) => {
@@ -260,3 +260,22 @@ export const recordDate = async (date) => {
 };
 
 export const dltDoc = (docRef) => deleteDoc(docRef);
+
+export const makeChild = (tasks, source, dest) => {
+  // Find dropped task's children
+  const droppedIndents = tasks[source].data().indents;
+  let lastChildIndex = source;
+
+  for (let i = source + 1; i < tasks.length; i++) {
+    if (tasks[i].data().indents === droppedIndents) break;
+    lastChildIndex = i;
+  };
+
+  console.log("Dropped task and children range from: " + source + " to: " + lastChildIndex);
+}
+
+export const indent = async (docSnap, increment) => {
+  await updateDoc(docSnap.ref, {
+    indents: docSnap.data().indents + increment,
+  })
+}

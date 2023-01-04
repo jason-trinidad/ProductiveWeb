@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import { DragDropContext } from "react-beautiful-dnd";
 import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
 import { reorder, addFirstLine, schedule } from "./db/db-actions";
@@ -112,7 +111,7 @@ function App() {
   }
 
   return (
-    <DragDropContext onDragEnd={dragEndHandler}>
+    <>
       <div className="grid-container">
         <div className="nav">
           <button onClick={signInWithGoogle}>{"Sign in"}</button>
@@ -126,7 +125,7 @@ function App() {
           <MyCalendar ref={ref} updateParentDates={updateCalDates} />
         </div>
       </div>
-    </DragDropContext>
+    </>
   );
 }
 
