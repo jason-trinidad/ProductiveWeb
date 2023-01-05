@@ -12,7 +12,7 @@ const firstTimeLogin = async (uid) => {
 
 export const signInWithGoogle = async () => {
   const prevUser = auth.currentUser;
-  const { taskStore, tasks } = await getAllTasks(prevUser);
+  const tasks = await getAllTasks(prevUser);
 
   const provider = new GoogleAuthProvider();
 

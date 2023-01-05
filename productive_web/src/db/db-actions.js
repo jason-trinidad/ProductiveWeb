@@ -15,11 +15,8 @@ import {
 } from "firebase/firestore";
 import * as settings from "../components/MyCalendar/cal-settings";
 
-const createRandomKey = () => Math.random().toString();
-
 // New task template
 const createNewTask = (title = "", listIndex = 0, indents = 0) => ({
-  key: createRandomKey(), //TODO: consider. id from db entry, or keep internal keys?
   title: title,
   listIndex: listIndex,
   startTime: null,
@@ -31,12 +28,31 @@ const createNewTask = (title = "", listIndex = 0, indents = 0) => ({
   indents: indents,
 });
 
-export const getAllTasks = async (user = auth.currentUser) => {
-  const taskStore = "Users/" + user.uid + "/Tasks";
-  const tasksQuery = query(collection(db, taskStore), orderBy("listIndex"));
-  const tasks = await getDocs(tasksQuery);
+// Returns array of all docs in Users/[userId]/Tasks
+export const getAllTasks = async () => {
+  const user = auth.currentUser;
+  const ref = collection(db, "Users/" + user.uid + "/Tasks");
+  const q = query(ref, orderBy("listIndex"), orderBy("startTime"));
+  const tasks = await getDocs(q);
 
-  return { taskStore, tasks };
+  return tasks.docs;
+};
+
+// Returns list-sorted array of the earliest instance of every task
+export const getNearestTasks = async () => {
+  const tasks = await getAllTasks();
+  const res = [];
+
+  let lastRep = null;
+  tasks.forEach((task) => {
+    const curRep = task.data().repeatRef?.path;
+    if (curRep === undefined || curRep !== lastRep) {
+      res.push(task);
+      if (curRep) lastRep = curRep;
+    }
+  });
+
+  return res;
 };
 
 export const addFirstLine = async () => {
@@ -47,56 +63,57 @@ export const addFirstLine = async () => {
   await setDoc(newTask, createNewTask());
 };
 
-// TODO: using batch for offline capability. Better to use transaction?
-export const carriageReturn = async (prevDoc, prevTaskData) => {
-  const { taskStore, tasks } = await getAllTasks();
+// Create a new task below the originating task
+export const carriageReturn = async (prevDoc) => {
+  const tasks = getNearestTasks();
+  const prevData = prevDoc.data();
 
-  // Save prevTask's title
-  const batch = writeBatch(db);
-  batch.update(prevDoc.ref, { title: prevTaskData.title });
+  // Save the originating task's title
+  let batch = writeBatch(db);
+  batch.update(prevDoc.ref, { title: prevData.title });
 
-  // Update successive list indexes
-  tasks.docs.map((doc) => {
-    if (doc.data().listIndex > prevDoc.data().listIndex)
-      batch.update(doc.ref, { listIndex: doc.data().listIndex + 1 });
-  });
+  // Update succeeding list indices
+  for (let i = prevData.listIndex + 1; i < tasks.length; i++) {
+    updateAllRepeats(tasks[i], {
+      listIndex: tasks[i].data().listIndex + 1,
+    });
+  }
 
   // Create a doc for the new task
+  const user = auth.currentUser;
+  const taskStore = "Users/" + user.uid + "/Tasks";
   const newTask = doc(collection(db, taskStore));
   batch.set(
     newTask,
-    createNewTask("", prevDoc.data().listIndex + 1, prevDoc.data().indents)
+    createNewTask("", prevData.listIndex + 1, prevData.indents)
   );
 
-  batch.commit();
+  await batch.commit();
 };
 
 export const update = (doc, title) => {
   updateDoc(doc.ref, { title: title });
 };
 
-// TODO: check if last item in collection! Rn someone could hold delete on first/only line and cause a bunch of pings
-// TODO: re-think ordering scheme so we can order by on server AND avoid iteration on client
+// TODO: is there a way to pass WriteBatch so it stays intact?
 export const remove = async (toRemove) => {
   await deleteDoc(toRemove.ref);
 
-  const { taskStore, tasks } = await getAllTasks();
+  const tasks = await getNearestTasks();
+  console.log(tasks);
 
   // Update new list indices
-  const batch = writeBatch(db);
 
-  tasks.docs.forEach((doc, i) => {
-    batch.update(doc.ref, { listIndex: i });
+  tasks.forEach((doc, i) => {
+    updateAllRepeats(doc, { listIndex: i });
   });
-
-  batch.commit();
 };
 
 // Note: `tasks` will be mutated!
-// TODO: see if possible to pass batch to updateAllRepeats
+// TODO why is function not waiting for updateAllRepeats?
 export const reorder = (tasks, source, lastChild, dest) => {
+  // Extract source and children from tasks
   const numToMove = lastChild - source + 1;
-  // Remove source and children from tasks
   const sourceAndChildren = tasks.splice(source, numToMove);
 
   // Add source and children back to tasks below the targeted task
@@ -104,7 +121,10 @@ export const reorder = (tasks, source, lastChild, dest) => {
   tasks.splice(finalDest + 1, 0, ...sourceAndChildren);
 
   // Save new indices
-  tasks.forEach((task, index) => updateAllRepeats(task, {listIndex: index}));
+  tasks.forEach(
+    (task, index) =>
+      updateAllRepeats(task, { listIndex: index })
+  )
 };
 
 export const createTeamUp = async (doc, email) => {
@@ -167,26 +187,20 @@ export const toggleDone = (doc) => {
 };
 
 // Migrate anon data to new signed-in user
-// TODO: move check for existing user here, to allow more general use of function
 export const migrate = async (user, tasks) => {
   const newRef = "Users/" + user.uid + "/Tasks";
-  tasks.docs.map(
-    async (task) => await addDoc(collection(db, newRef), task.data())
-  );
+  tasks.map(async (task) => await addDoc(collection(db, newRef), task.data()));
 };
 
-// TODO: fix this dragId stuff
 export const schedule = async (
-  dragId,
+  docPath,
   startTime,
   endTime = null,
   title = null
 ) => {
-  // Query to find docRef from dragId
-  const user = auth.currentUser;
-  const taskStore = "Users/" + user.uid + "/Tasks";
-  const q = query(collection(db, taskStore), where("dragId", "==", dragId));
-  const snapshot = await getDocs(q);
+  // Get the task in question from DB
+  const docRef = doc(db, docPath);
+  const snapshot = await getDoc(docRef);
 
   // If no end time provided, assume event should end after default duration
   if (startTime && !endTime) {
@@ -196,17 +210,16 @@ export const schedule = async (
   }
 
   if (!title) {
-    title = snapshot.docs[0].data().title;
+    title = snapshot.data().title;
   }
 
-  await updateDoc(snapshot.docs[0].ref, {
+  await updateDoc(snapshot.ref, {
     title: title,
     startTime: startTime,
     endTime: endTime,
   });
 };
 
-// Purpose of creating repeat docs is to have smaller pool to query for repeat purposes
 export const scheduleRepeat = async (task, repeatInfo) => {
   // If repeat exists, do nothing (pending re-schedule implementation)
   if (task.data().repeatRef !== null) {
@@ -252,12 +265,14 @@ export const recordDate = async (date) => {
 
 export const dltDoc = (docRef) => deleteDoc(docRef);
 
+// Generic function to update every non-archived instance of a repeated task with
 export const updateAllRepeats = async (taskDoc, newProps) => {
   let tasks = [];
+
+  // Get the task's repeats, if necessary
   if (taskDoc.data().repeatRef === null) {
     tasks.push(taskDoc);
   } else {
-    // Get all instances of a given repeat
     const user = auth.currentUser;
     const taskStore = "Users/" + user.uid + "/Tasks";
     const q = query(
@@ -269,14 +284,10 @@ export const updateAllRepeats = async (taskDoc, newProps) => {
     tasks = res.docs;
   }
 
-  // Update all
-  const batch = writeBatch(db);
-
-  tasks.forEach((task) => {
-    batch.update(task.ref, newProps);
+  // Update each task
+  tasks.forEach(async (task) => {
+    await updateDoc(task.ref, newProps);
   });
-
-  await batch.commit();
 };
 
 export const orderBelow = async (tasks, source, dest, isChild) => {
@@ -286,16 +297,20 @@ export const orderBelow = async (tasks, source, dest, isChild) => {
     tasks[dest].data().indents - sourceOGIndents + (isChild ? 1 : 0);
   let lastChildIndex;
 
+  // const batch = writeBatch(db);
+
   for (let i = source; i < tasks.length; i++) {
     if (i !== source && tasks[i].data().indents <= sourceOGIndents) break; // Returned to parent level
 
     // Update indents, including repeats if any
     const newIndents = tasks[i].data().indents + indentChange;
-    updateAllRepeats(tasks[i], { indents: newIndents });
+    await updateAllRepeats(tasks[i], { indents: newIndents });
 
     // Store last child's index for re-ordering
     lastChildIndex = i;
   }
+
+  // await batch.commit();
 
   reorder(tasks, source, lastChildIndex, dest);
 };
@@ -305,3 +320,7 @@ export const indent = async (docSnap, increment) => {
     indents: docSnap.data().indents + increment,
   });
 };
+
+// export const archiveTask = async(docSnap) => {
+//   await
+// }

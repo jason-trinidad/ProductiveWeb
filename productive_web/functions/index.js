@@ -130,8 +130,6 @@ exports.createRepeatInstances = functions.firestore
         const donor = { ...donorSnap.data() };
         await fs.collection(`Users/${context.params.userId}/Tasks`).add({
           ...donor,
-          key: Math.random().toString(),
-          dragId: Math.random().toString(),
           startTime: new Date(
             jsDate.getFullYear(),
             jsDate.getMonth(),
@@ -182,8 +180,6 @@ exports.createRepeatsOnNewDate = functions.firestore
         const donor = { ...donorSnap.data() };
         await fs.collection(`Users/${context.params.userId}/Tasks`).add({
           ...donor,
-          key: Math.random().toString(),
-          dragId: Math.random().toString(),
           startTime: new Date(
             jsDate.getFullYear(),
             jsDate.getMonth(),

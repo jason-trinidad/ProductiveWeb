@@ -57,10 +57,16 @@ const TaskItem = (props) => {
     const data = {
       docPath: props.snapshot.ref.path,
       startIndex: props.index,
+      obj: "task",
     };
     e.dataTransfer.setData("text/plain", JSON.stringify(data));
   };
-  
+
+  const handleClickArchive = (e) => {
+    e.preventDefault();
+    return;
+  }
+
 // TODO: make IDs unique
   return (
     <div
@@ -86,6 +92,9 @@ const TaskItem = (props) => {
               onKeyDown={keyShortsHandler}
             />
           </form>
+          {/* <button onClick={handleClickArchive}>
+            🗑️
+          </button> */}
         </div>
       </div>
       <BelowSensor id={props.index} onDrop={props.handleDropBelow} />

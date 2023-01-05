@@ -10,6 +10,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../../db/db";
 import { DateField } from "./DateField";
 import { onAuthStateChanged } from "firebase/auth";
+import { schedule } from "../../db/db-actions";
 
 // TODO: add Redux back in for view state? (Not data state.)
 
@@ -120,6 +121,9 @@ export const MyCalendar = React.forwardRef((props, ref) => {
 
     // Add case to detect taskItem. Maybe execute function passed by App?
     switch (data.obj) {
+      case "task":
+        newStart = dropTime;
+        schedule(data.docPath, newStart)
       case "event":
         newStart = dropTime;
         newEnd = new Date(
@@ -140,7 +144,6 @@ export const MyCalendar = React.forwardRef((props, ref) => {
         break;
     }
 
-    // TODO: re-write `schedule` in db-actions to use document path
     updateDoc(doc(db, data.path), { startTime: newStart, endTime: newEnd });
   };
 

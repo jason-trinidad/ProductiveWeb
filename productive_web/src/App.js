@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
-import { reorder, addFirstLine, schedule } from "./db/db-actions";
+import { addFirstLine } from "./db/db-actions";
 import { List } from "./components/List/List";
 import { MyCalendar } from "./components/MyCalendar/MyCalendar";
 import { auth } from "./db/db";
@@ -26,18 +26,17 @@ import { getDateTime } from "./components/MyCalendar/cal-utils";
 // Desktop push notifications
 // Create repeats for current-day on backend for push notifications
 // Archive "done" tasks at midnight
-// Indents (maybe switch to/extend Atlassian's tree framework for list)
+// Indents (maybe switch to/extend Atlassian's tree framework for list)[DIY] √
 // Add Outlook
 // Populate from Google Tasks+Calendar / Apple Reminders+Calendar
 // Solution for finding team up if no friends (random names? "Make available to team up" option? Matchmaking?)
-// (If not fixed:) save value of active input before leaving page [could do this in useEffect return statement]
-// Clean up dates in EventDetail
+// (If not fixed:) save value of active input before leaving page [could do this in useEffect return statement] √
+// Clean up dates in EventDetail √
 // Look at trade-off, massive # divs vs many grid rows, get rid of "DateGrid"
 // Undo?
 // Focus on previous element on delete (maybe convert to class component?)
 // Keyboard shortcuts
-// Input on short click, drag/drop on long clicks
-// Try out FireSQL in List
+// Input on short click, drag/drop on long clicks √
 // Offline support
 // 5 min task section (drag or tag task as 5 min, shows in window above List. No nesting, copied from List)
 // When dragging over calendar, drag in 5 min "steps" [kind of fixed with dateline. Intend to resolve with new DND scheme]
@@ -48,7 +47,6 @@ function App() {
   const ref = useRef(); // Ref for locating date grid
   // TODO: change to Redux (?)
   const [calDatesDisplayed, setCalDatesDisplayed] = useState([]);
-  const [tasksDisplayed, setTasksDisplayed] = useState([]);
 
   useEffect(() => {
     if (isInitialRender) {
@@ -89,25 +87,8 @@ function App() {
     return getDateTime(ref, {pageX: mouseCoords.x, pageY: mouseCoords.y}, calDatesDisplayed[0]);
   };
 
-  const dragEndHandler = (result) => {
-    const { destination, source, draggableId } = result;
-
-    const time = handleCalendarDrop();
-    if (time) {
-      schedule(draggableId, time);
-      return;
-    }
-
-    if (!destination) return;
-    reorder(tasksDisplayed, draggableId, source.index, destination.index);
-  };
-
   const updateCalDates = (dates) => {
     setCalDatesDisplayed(() => dates);
-  }
-
-  const updateTasksDisplayed = (tasks) => {
-    setTasksDisplayed(() => tasks);
   }
 
   return (
@@ -119,7 +100,7 @@ function App() {
         </div>
         <h2 className="list-title">List</h2>
         <div className="list-container">
-          <List updateParentTasks={updateTasksDisplayed} />
+          <List />
         </div>
         <div className="cal-container">
           <MyCalendar ref={ref} updateParentDates={updateCalDates} />

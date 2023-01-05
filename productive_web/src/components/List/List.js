@@ -33,8 +33,6 @@ export const List = (props) => {
     const ref = collection(db, "Users/" + user.uid + "/Tasks");
     const q = query(
       ref,
-      where("isArchived", "==", false),
-      where("listIndex", ">=", 0), // Hack to allow "listIndex" order by
       orderBy("listIndex"),
       orderBy("startTime")
     );
@@ -74,18 +72,14 @@ export const List = (props) => {
     };
   }, [isInitialRender]);
 
-  useEffect(() => {
-    // Update app on tasks displayed
-    props.updateParentTasks(taskList);
-  }, [taskList]);
-
   const filterList = (taskList) => {
     const res = [];
     if (isChronoView) {
       // TODO
       console.log("Feature is not yet implemented");
+    // Alternative is "Task View", showing the most recent instance of each un-archived task
     } else {
-      // Alternative is "Task View", showing the most recent instance of each un-archived task
+      // Assumes tasks are ordered by startTime, and past repeats are archived
       let lastRep = null;
       taskList.forEach((task) => {
         const curRep = task.data().repeatRef?.path;
@@ -102,7 +96,7 @@ export const List = (props) => {
   const handleNewChild = async (e) => {
     e.preventDefault();
 
-    const tasks = filterList(taskList); 
+    const tasks = filterList(taskList);
     const dest = Number(e.target.id);
     const data = JSON.parse(e.dataTransfer.getData("text/plain"));
 
@@ -140,8 +134,7 @@ export const List = (props) => {
       {filterList(taskList).map((task, index) => (
         <TaskItem
           snapshot={task}
-          key={task.data().key}
-          draggableId={task.data().dragId}
+          key={task.ref.path}
           index={index}
           data={{ ...task.data() }}
           handleNewChild={handleNewChild}

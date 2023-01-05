@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { schedule, scheduleRepeat, update } from "../../db/db-actions";
+import { scheduleRepeat, update } from "../../db/db-actions";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 
@@ -12,6 +12,7 @@ const Event = (props) => {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [isSelected, setIsSelected] = useState(false);
   const [repeatDoc, setRepeatDoc] = useState(null);
+
   const startRow = dateToCSSGridRow(props.docSnap.data().startTime.toDate());
   const endRow = dateToCSSGridRow(props.docSnap.data().endTime.toDate());
   const rows = `${startRow} / ${endRow}`;
@@ -19,6 +20,7 @@ const Event = (props) => {
     .data()
     .startTime.toDate()
     .toLocaleTimeString("en-US", { timeStyle: "short" });
+  const isDone = props.docSnap.data().isDone;
 
   useEffect(() => {
     (async () => {
@@ -94,7 +96,7 @@ const Event = (props) => {
       }
     >
       <div
-        className="event"
+        className={isDone ? "event-done" : "event"}
         style={{
           gridRow: rows,
           boxShadow: isSelected ? "0px 2px 10px rgba(0,0,0,0.1)" : "",

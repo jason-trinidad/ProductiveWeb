@@ -58,10 +58,9 @@ const EventDetail = (props) => {
     setEnteredTitle(e.target.value);
   };
 
-  // TODO: reset TeamUp, streak and rename function
   const handleClick = (e) => {
     e.preventDefault();
-    schedule(props.docSnap.data().dragId, null, null);
+    schedule(props.docSnap.ref.path, null, null);
     setStreak(null);
   };
 
@@ -83,8 +82,6 @@ const EventDetail = (props) => {
     // Otherwise, invite the requested user
     if (!inviteFound) createTeamUp(props.docSnap, requestedPartner);
   };
-
-  console.log(props.repeatVal)
 
   return (
     <>
