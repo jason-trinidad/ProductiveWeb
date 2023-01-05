@@ -92,29 +92,19 @@ export const remove = async (toRemove) => {
   batch.commit();
 };
 
-export const reorder = (tasks, source, lastChild, destination) => {
-  // (Inclusive) range of list indices to be changed, and their direction of change
-  const start = source < destination ? lastChild + 1 : destination + 1;
-  // console.log("Range to change starts at: #" + tasks[start].data().title);
-  const end = source < destination ? destination : source - 1;
-  // console.log("Range to change ends at: #" + tasks[end].data().title);
-  const inc =
-    source < destination
-      ? -1 * (lastChild - source + 1)
-      : lastChild - source + 1;
+// Note: `tasks` will be mutated!
+// TODO: see if possible to pass batch to updateAllRepeats
+export const reorder = (tasks, source, lastChild, dest) => {
+  const numToMove = lastChild - source + 1;
+  // Remove source and children from tasks
+  const sourceAndChildren = tasks.splice(source, numToMove);
 
-  // Change the list index for tasks between start and end of the change region
-  tasks.map((task) => {
-    if (task.data().listIndex >= start && task.data().listIndex <= end) {
-      updateAllRepeats(task, { listIndex: task.data().listIndex + inc });
-    }
-  });
+  // Add source and children back to tasks below the targeted task
+  const finalDest = source > dest ? dest : dest - numToMove;
+  tasks.splice(finalDest + 1, 0, ...sourceAndChildren);
 
-  // Update indices for source and its children (if any)
-  for (let i = source; i <= lastChild; i++) {
-    console.log("Bound for index: " + (destination + 1 + (i - source)));
-    updateAllRepeats(tasks[i], { listIndex: destination + 1 + (i - source) });
-  }
+  // Save new indices
+  tasks.forEach((task, index) => updateAllRepeats(task, {listIndex: index}));
 };
 
 export const createTeamUp = async (doc, email) => {
@@ -276,7 +266,7 @@ export const updateAllRepeats = async (taskDoc, newProps) => {
     );
 
     const res = await getDocs(q);
-    tasks = [...res.docs];
+    tasks = res.docs;
   }
 
   // Update all
@@ -290,7 +280,6 @@ export const updateAllRepeats = async (taskDoc, newProps) => {
 };
 
 export const orderBelow = async (tasks, source, dest, isChild) => {
-  console.log("Destination: " + dest)
   // Find dropped task's children and adjust indents
   const sourceOGIndents = tasks[source].data().indents;
   const indentChange =
