@@ -1,5 +1,6 @@
 .event {
     background-color: aqua;
+    opacity: .95;
     width: 100%;
     cursor: grab;
     z-index: 100;

@@ -121,10 +121,7 @@ export const reorder = (tasks, source, lastChild, dest) => {
   tasks.splice(finalDest + 1, 0, ...sourceAndChildren);
 
   // Save new indices
-  tasks.forEach(
-    (task, index) =>
-      updateAllRepeats(task, { listIndex: index })
-  )
+  tasks.forEach((task, index) => updateAllRepeats(task, { listIndex: index }));
 };
 
 export const createTeamUp = async (doc, email) => {
@@ -297,20 +294,16 @@ export const orderBelow = async (tasks, source, dest, isChild) => {
     tasks[dest].data().indents - sourceOGIndents + (isChild ? 1 : 0);
   let lastChildIndex;
 
-  // const batch = writeBatch(db);
-
   for (let i = source; i < tasks.length; i++) {
     if (i !== source && tasks[i].data().indents <= sourceOGIndents) break; // Returned to parent level
 
-    // Update indents, including repeats if any
+    // Update indents, including any repeats
     const newIndents = tasks[i].data().indents + indentChange;
     await updateAllRepeats(tasks[i], { indents: newIndents });
 
     // Store last child's index for re-ordering
     lastChildIndex = i;
   }
-
-  // await batch.commit();
 
   reorder(tasks, source, lastChildIndex, dest);
 };
@@ -321,6 +314,12 @@ export const indent = async (docSnap, increment) => {
   });
 };
 
-// export const archiveTask = async(docSnap) => {
-//   await
-// }
+export const archiveTask = async (docSnap) => {
+  const docData = docSnap.data();
+
+  await remove(docSnap);
+
+  const user = auth.currentUser;
+  const archivePath = "Users/" + user.uid + "/Archive";
+  await addDoc(collection(db, archivePath), docData);
+};

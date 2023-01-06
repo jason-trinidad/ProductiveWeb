@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
 
 import BelowSensor from "./BelowSensor";
 import styles from "./TaskItem.module.css";
@@ -25,7 +27,8 @@ const TaskItem = (props) => {
       if (taskData.indents > 0) dbActions.indent(props.snapshot, -1);
     } else if (e.key === "Tab") {
       e.preventDefault();
-      if (taskData.indents < props.maxIndent) dbActions.indent(props.snapshot, 1);
+      if (taskData.indents < props.maxIndent)
+        dbActions.indent(props.snapshot, 1);
     }
   };
 
@@ -64,10 +67,11 @@ const TaskItem = (props) => {
 
   const handleClickArchive = (e) => {
     e.preventDefault();
-    return;
-  }
 
-// TODO: make IDs unique
+    dbActions.archiveTask(props.snapshot);
+  };
+
+  // TODO: make IDs unique
   return (
     <div
       draggable={true}
@@ -92,9 +96,25 @@ const TaskItem = (props) => {
               onKeyDown={keyShortsHandler}
             />
           </form>
-          {/* <button onClick={handleClickArchive}>
-            🗑️
-          </button> */}
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`arcv-tooltip-${props.index}`}>Archive</Tooltip>
+            }
+          >
+            <button
+              style={{
+                padding: 0,
+                border: "none",
+                borderRadius: "0%",
+                backgroundColor: "transparent",
+                textAlign: "center",
+              }}
+              onClick={handleClickArchive}
+            >
+              🗑️
+            </button>
+          </OverlayTrigger>
         </div>
       </div>
       <BelowSensor id={props.index} onDrop={props.handleDropBelow} />
