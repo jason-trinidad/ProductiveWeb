@@ -96,7 +96,9 @@ const EventDetail = (props) => {
       <Popover.Body>
         <WeeklyRepeatUI
           passRepeatData={getRepeatData}
-          repeatDoc={props.repeatDoc}
+          repSnap={props.repSnap}
+          repeatVal={!props.repSnap ? [] : props.repSnap.data().repeatVal}
+          startTime={props.docSnap.data().startTime.toDate()}
         />
         <div style={{ border: "10px solid transparent" }}></div>
         <Form onSubmit={handleTeamUpRequest}>

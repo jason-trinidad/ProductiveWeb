@@ -1,13 +1,15 @@
-import React, { useState } from "react";
-import { dltDoc } from "../../db/db-actions";
+import React, { useEffect, useState } from "react";
+import { endRepeat } from "../../db/db-actions";
 import { Button, ButtonGroup, Form } from "react-bootstrap";
 import ToggleButton from "react-bootstrap/ToggleButton";
 import ToggleButtonGroup from "react-bootstrap/ToggleButtonGroup";
 
 const WeeklyRepeatUI = (props) => {
-  const [value, setValue] = useState(
-    props.repeatDoc !== null ? props.repeatDoc.data().repeatVal : []
-  );
+  const [value, setValue] = useState([]);
+
+  useEffect(() => {
+    setValue(props.repeatVal)
+  }, [props.repeatVal])
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,8 +21,11 @@ const WeeklyRepeatUI = (props) => {
   };
 
   const handleEndRepeat = () => {
-    setValue([]);
-    dltDoc(props.repeatDoc.ref);
+    endRepeat(props.repSnap, props.startTime)
+    // Write endRepeat in db-actions
+    // Test on emulator
+    // Test in production
+    // Deadlines (?) 
   };
 
   return (
@@ -53,11 +58,9 @@ const WeeklyRepeatUI = (props) => {
         <Button variant="primary mr-1" size="sm" type="submit">
           Create
         </Button>
-        {props.repeatDoc !== null ? (
-          <Button variant="primary mr-1" size="sm" onClick={handleEndRepeat}>
-            End Repeat
-          </Button>
-        ) : null}
+        <Button variant="primary mr-1" size="sm" onClick={handleEndRepeat} disabled={value.length === 0 ? true : false}>
+          End Repeat
+        </Button>
       </ButtonGroup>
     </Form>
   );

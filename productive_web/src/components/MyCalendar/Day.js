@@ -11,7 +11,9 @@ import { recordDate } from "../../db/db-actions";
 const Day = (props) => {
   const [isInitialRender, setIsInitialRender] = useState(true);
   const [eventList, setEventList] = useState([]);
+  const [repMap, setRepMap] = useState(new Map());
   const [detachTaskListener, setDetachTaskListener] = useState(null);
+  const [detachRepListener, setDetachRepListener] = useState(null);
   const [detachAuthListener, setDetachAuthListener] = useState(null);
 
   const taskListener = (user) => {
@@ -26,7 +28,7 @@ const Day = (props) => {
 
     const q = query(
       ref,
-      where("startTime", ">", start),
+      where("startTime", ">=", start),
       where("startTime", "<", end)
     );
 
@@ -34,6 +36,30 @@ const Day = (props) => {
       querySnapshot.empty
         ? setEventList(() => [])
         : setEventList(querySnapshot.docs);
+    });
+
+    return unsub;
+  };
+
+  const repListener = (user) => {
+    const start = props.date;
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+    // console.log(start.getTime())
+
+    const ref = collection(db, "Users/" + user.uid + "/Repeats");
+
+    const q = query(
+      ref,
+      where("repeatStartMSecs", "<", end.getTime()),
+      where("repeatVal", "array-contains", start.getDay() + 1)
+    );
+
+    const unsub = onSnapshot(q, (querySnapshot) => {
+      querySnapshot.empty
+        ? setRepMap(new Map())
+        : querySnapshot.docs.forEach((rep) =>
+            setRepMap((prev) => prev.set(rep.ref.path, rep))
+          );
     });
 
     return unsub;
@@ -49,8 +75,10 @@ const Day = (props) => {
           recordDate(props.date);
 
           const unsubTasks = taskListener(user);
+          const unsubReps = repListener(user);
 
           setDetachTaskListener(() => () => unsubTasks());
+          setDetachRepListener(() => () => unsubReps());
         }
       });
 
@@ -60,6 +88,10 @@ const Day = (props) => {
     return () => {
       if (detachTaskListener !== null) {
         detachTaskListener();
+      }
+
+      if (detachRepListener !== null) {
+        detachRepListener();
       }
 
       if (detachAuthListener !== null) {
@@ -82,7 +114,15 @@ const Day = (props) => {
       }}
     >
       {eventList.map((docSnap, i) => (
-        <Event key={i} docSnap={docSnap} />
+        <Event
+          key={i}
+          docSnap={docSnap}
+          repSnap={
+            docSnap.data().repeatRef
+              ? repMap.get(docSnap.data().repeatRef.path)
+              : null
+          }
+        />
       ))}
     </div>
   );

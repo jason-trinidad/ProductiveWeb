@@ -11,7 +11,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
 import "./List.module.css";
-import { orderBelow } from "../../db/db-actions";
+import { carriageReturn, orderBelow } from "../../db/db-actions";
 
 // Known bugs:
 // 1. Drop is a bit ratchety (i.e. jolts after a drop).
@@ -38,7 +38,7 @@ export const List = (props) => {
     // Invoke listener
     const u = onSnapshot(q, (querySnapshot) => {
       querySnapshot.empty
-        ? console.log("empty")
+        ? setTaskList([])
         : setTaskList(querySnapshot.docs);
     });
 
@@ -91,6 +91,10 @@ export const List = (props) => {
     return res;
   };
 
+  const handleCarriageReturn = (docSnap) => {
+    carriageReturn(docSnap, filterList(taskList));
+  }
+
   const handleNewChild = async (e) => {
     e.preventDefault();
 
@@ -137,6 +141,7 @@ export const List = (props) => {
           data={{ ...task.data() }}
           handleNewChild={handleNewChild}
           handleDropBelow={handleDropBelow}
+          handleCarriageReturn={handleCarriageReturn}
           maxIndent={
             index === 0 ? 0 : filterList(taskList)[index - 1].data().indents + 1
           }

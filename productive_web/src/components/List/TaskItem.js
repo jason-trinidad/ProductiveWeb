@@ -45,10 +45,7 @@ const TaskItem = (props) => {
   const submitHandler = (event) => {
     event.preventDefault();
 
-    dbActions.carriageReturn(props.snapshot, {
-      index: props.index,
-      title: enteredTitle,
-    });
+    props.handleCarriageReturn(props.snapshot);
   };
 
   const completionHandler = () => {
@@ -67,6 +64,7 @@ const TaskItem = (props) => {
 
   const handleClickArchive = (e) => {
     e.preventDefault();
+    e.stopPropagation();
 
     dbActions.toggleArchived(props.snapshot);
   };

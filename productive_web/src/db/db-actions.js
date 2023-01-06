@@ -48,8 +48,9 @@ export const getAllTasks = async () => {
 export const getNearestTasks = async () => {
   const tasks = await getAllTasks();
   const res = [];
-
   let lastRep = null;
+
+  // Assumes tasks are ordered by start time
   tasks.forEach((task) => {
     const curRep = task.data().repeatRef?.path;
     if (curRep === undefined || curRep !== lastRep) {
@@ -70,15 +71,14 @@ export const addFirstLine = async () => {
 };
 
 // Create a new task below the originating task
-export const carriageReturn = async (prevDoc) => {
-  const tasks = getNearestTasks();
+export const carriageReturn = async (prevDoc, tasks) => {
   const prevData = prevDoc.data();
 
   // Save the originating task's title
   let batch = writeBatch(db);
   batch.update(prevDoc.ref, { title: prevData.title });
 
-  // Update succeeding list indices
+  // Update successive list indices
   for (let i = prevData.listIndex + 1; i < tasks.length; i++) {
     updateAllRepeats(tasks[i], {
       listIndex: tasks[i].data().listIndex + 1,
@@ -102,11 +102,10 @@ export const update = (doc, title) => {
 };
 
 // TODO: is there a way to pass WriteBatch so it stays intact?
-export const remove = async (toRemove) => {
-  await deleteDoc(toRemove.ref);
+export const remove = async (docSnap) => {
+  await deleteDoc(docSnap.ref);
 
   const tasks = await getNearestTasks();
-  console.log(tasks);
 
   // Update new list indices
 
@@ -199,7 +198,7 @@ export const schedule = async (
   docPath,
   startTime,
   endTime = null,
-  title = null
+  title = null,
 ) => {
   // Get the task in question from DB
   const docRef = doc(db, docPath);
@@ -268,6 +267,20 @@ export const recordDate = async (date) => {
 
 export const dltDoc = (docRef) => deleteDoc(docRef);
 
+const getAllTaskRepeats = async (repeatRef) => {
+  const user = auth.currentUser;
+    const taskStore = "Users/" + user.uid + "/Tasks";
+    const q = query(
+      collection(db, taskStore),
+      where("repeatRef", "==", repeatRef)
+    );
+
+    const res = await getDocs(q);
+
+    return res.docs;
+  
+}
+
 // Generic function to update every non-archived instance of a repeated task with
 export const updateAllRepeats = async (taskDoc, newProps) => {
   let tasks = [];
@@ -276,15 +289,7 @@ export const updateAllRepeats = async (taskDoc, newProps) => {
   if (taskDoc.data().repeatRef === null) {
     tasks.push(taskDoc);
   } else {
-    const user = auth.currentUser;
-    const taskStore = "Users/" + user.uid + "/Tasks";
-    const q = query(
-      collection(db, taskStore),
-      where("repeatRef", "==", taskDoc.data().repeatRef)
-    );
-
-    const res = await getDocs(q);
-    tasks = res.docs;
+    tasks = await getAllTaskRepeats(taskDoc.data().repeatRef)
   }
 
   // Update each task
@@ -292,6 +297,24 @@ export const updateAllRepeats = async (taskDoc, newProps) => {
     await updateDoc(task.ref, newProps);
   });
 };
+
+// Removes all existing future repeats, the repeat tracking doc, and remaining references to the repeat doc
+export const endRepeat = async (repSnap, lastStartTime) => {
+  // Get all task docs with this repeat
+  const tasks = await getAllTaskRepeats(repSnap.ref);
+
+  // Remove existing future repeats and remove references to the repeat doc
+  tasks.forEach(async (task) => {
+    if (task.data().startTime.toDate().getTime() > lastStartTime.getTime()) {
+      remove(task);
+    } else {
+      await updateDoc(task.ref, {repeatRef: null});
+    }
+  })
+
+  // Delete the repeat doc
+  await deleteDoc(repSnap.ref);
+}
 
 export const orderBelow = async (tasks, source, dest, isChild) => {
   // Find dropped task's children and adjust indents

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { scheduleRepeat, update } from "../../db/db-actions";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
@@ -6,12 +6,9 @@ import Popover from "react-bootstrap/Popover";
 import { dateToCSSGridRow } from "./cal-utils";
 import "./Event.css";
 import EventDetail from "./EventDetail";
-import { getDoc } from "firebase/firestore";
 
 const Event = (props) => {
-  const [isInitialRender, setIsInitialRender] = useState(true);
   const [isSelected, setIsSelected] = useState(false);
-  const [repeatDoc, setRepeatDoc] = useState(null);
 
   const startRow = dateToCSSGridRow(props.docSnap.data().startTime.toDate());
   const endRow = dateToCSSGridRow(props.docSnap.data().endTime.toDate());
@@ -21,22 +18,6 @@ const Event = (props) => {
     .startTime.toDate()
     .toLocaleTimeString("en-US", { timeStyle: "short" });
   const isDone = props.docSnap.data().isDone;
-
-  useEffect(() => {
-    (async () => {
-      if (props.docSnap.data().repeatRef && isInitialRender) {
-        setIsInitialRender(false);
-        const ref = props.docSnap.data().repeatRef;
-        const rep = await getDoc(ref);
-        // Store repeat info if event is part of repeat
-        if (
-          rep.data().repeatStartMSecs <
-          props.docSnap.data().startTime.toDate().getTime()
-        )
-          setRepeatDoc(rep);
-      }
-    })();
-  }, [isInitialRender]);
 
   const handleEventDragStart = (e) => {
     e.stopPropagation();
@@ -91,7 +72,7 @@ const Event = (props) => {
       onToggle={handleToggle}
       overlay={
         <Popover id="popover-basic">
-          <EventDetail docSnap={props.docSnap} repeatDoc={repeatDoc} passFormData={updateEventData} />
+          <EventDetail docSnap={props.docSnap} repSnap={props.repSnap} passFormData={updateEventData} />
         </Popover>
       }
     >
