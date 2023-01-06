@@ -68,7 +68,7 @@ const TaskItem = (props) => {
   const handleClickArchive = (e) => {
     e.preventDefault();
 
-    dbActions.archiveTask(props.snapshot);
+    dbActions.toggleArchived(props.snapshot);
   };
 
   // TODO: make IDs unique

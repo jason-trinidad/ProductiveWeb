@@ -24,17 +24,15 @@ export const List = (props) => {
   const [unsub, setUnsub] = useState(null);
   const [authUnsub, setAuthUnsub] = useState(null);
 
-  // Today defined in main body to refresh in case window is open overnight
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
   // Listen for desired tasks
   const listen = (user) => {
     const ref = collection(db, "Users/" + user.uid + "/Tasks");
     const q = query(
       ref,
+      where("isArchived", "==", false),
+      where("listIndex", ">=", 0), // Hack to allow order by listIndex
       orderBy("listIndex"),
-      orderBy("startTime")
+      orderBy("startTime"),
     );
 
     // Invoke listener

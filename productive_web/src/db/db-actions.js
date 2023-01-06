@@ -28,11 +28,17 @@ const createNewTask = (title = "", listIndex = 0, indents = 0) => ({
   indents: indents,
 });
 
-// Returns array of all docs in Users/[userId]/Tasks
+// Returns array of all (un-archived) docs in Users/[userId]/Tasks
 export const getAllTasks = async () => {
   const user = auth.currentUser;
   const ref = collection(db, "Users/" + user.uid + "/Tasks");
-  const q = query(ref, orderBy("listIndex"), orderBy("startTime"));
+  const q = query(
+    ref,
+    where("isArchived", "==", false),
+    where("listIndex", ">=", 0), // Hack to allow order by listIndex
+    orderBy("listIndex"),
+    orderBy("startTime"),
+  );
   const tasks = await getDocs(q);
 
   return tasks.docs;
@@ -314,12 +320,6 @@ export const indent = async (docSnap, increment) => {
   });
 };
 
-export const archiveTask = async (docSnap) => {
-  const docData = docSnap.data();
-
-  await remove(docSnap);
-
-  const user = auth.currentUser;
-  const archivePath = "Users/" + user.uid + "/Archive";
-  await addDoc(collection(db, archivePath), docData);
+export const toggleArchived = async (docSnap) => {
+  await updateDoc(docSnap.ref, { isArchived: !docSnap.data().isArchived })
 };
