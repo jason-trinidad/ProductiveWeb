@@ -4,10 +4,10 @@ import { onAuthStateChanged, signInAnonymously } from "firebase/auth";
 import { addFirstLine } from "./db/db-actions";
 import { List } from "./components/List/List";
 import { MyCalendar } from "./components/MyCalendar/MyCalendar";
+import MyNav from "./MyNav";
 import { auth } from "./db/db";
 import "./App.css";
-import { signInWithGoogle } from "./auth";
-import { getDateTime } from "./components/MyCalendar/cal-utils";
+// import { signInWithGoogle } from "./auth";
 
 // TODO:
 // Deadline
@@ -47,6 +47,13 @@ function App() {
   const ref = useRef(); // Ref for locating date grid
   // TODO: change to Redux (?)
   const [calDatesDisplayed, setCalDatesDisplayed] = useState([]);
+  const [isGoogleSignIn, setIsGoogleSignIn] = useState(false);
+
+  const didLogInWithGoogle = async () => {
+    const res = await auth.currentUser.getIdTokenResult();
+
+    return res.signInProvider === "google.com";
+  }
 
   useEffect(() => {
     if (isInitialRender) {
@@ -56,6 +63,7 @@ function App() {
       onAuthStateChanged(auth, (user) => {
         if (user) {
           console.log("Logged in");
+          didLogInWithGoogle().then(res => setIsGoogleSignIn(res))
         } else {
           signInAnonymously(auth)
             .then(() => {
@@ -77,16 +85,6 @@ function App() {
     }
   }, [isInitialRender]);
 
-  const handleCalendarDrop = () => {
-    const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
-
-    if (mouseCoords.x < dfOrigin.x || mouseCoords.y < dfOrigin.y) {
-      return null;
-    }
-
-    return getDateTime(ref, {pageX: mouseCoords.x, pageY: mouseCoords.y}, calDatesDisplayed[0]);
-  };
-
   const updateCalDates = (dates) => {
     setCalDatesDisplayed(() => dates);
   }
@@ -94,10 +92,11 @@ function App() {
   return (
     <>
       <div className="grid-container">
-        <div className="nav">
+        <MyNav isGoogleSignIn={isGoogleSignIn} className="nav" />
+        {/* <div className="nav">
           <button onClick={signInWithGoogle}>{"Sign in"}</button>
           <button onClick={() => auth.signOut()}>{"Log out"}</button>
-        </div>
+  </div> */}
         <h2 className="list-title">List</h2>
         <div className="list-container">
           <List />
@@ -105,7 +104,7 @@ function App() {
         <div className="cal-container">
           <MyCalendar ref={ref} updateParentDates={updateCalDates} />
         </div>
-      </div>
+      </div> 
     </>
   );
 }

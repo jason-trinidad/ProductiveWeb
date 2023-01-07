@@ -7,9 +7,15 @@ import ToggleButtonGroup from "react-bootstrap/ToggleButtonGroup";
 const WeeklyRepeatUI = (props) => {
   const [value, setValue] = useState([]);
 
+  const propsHasVal = () => {
+    if (props.repeatVal) if (props.repeatVal.length > 0) return true;
+
+    return false;
+  };
+
   useEffect(() => {
-    setValue(props.repeatVal)
-  }, [props.repeatVal])
+    if (propsHasVal()) setValue(props.repeatVal);
+  }, [props.repeatVal]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,17 +27,18 @@ const WeeklyRepeatUI = (props) => {
   };
 
   const handleEndRepeat = () => {
-    endRepeat(props.repSnap, props.startTime)
-    // Write endRepeat in db-actions
-    // Test on emulator
-    // Test in production
-    // Deadlines (?) 
+    endRepeat(props.repSnap, props.startTime);
   };
 
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Label>Repeat every week on:</Form.Label>
-      <ToggleButtonGroup type="checkbox" value={value} onChange={handleChange}>
+      <ToggleButtonGroup
+        type="checkbox"
+        value={value}
+        onChange={handleChange}
+        disabled={propsHasVal()}
+      >
         <ToggleButton variant="outline-primary" size="sm" id="Su" value={1}>
           S
         </ToggleButton>
@@ -58,7 +65,12 @@ const WeeklyRepeatUI = (props) => {
         <Button variant="primary mr-1" size="sm" type="submit">
           Create
         </Button>
-        <Button variant="primary mr-1" size="sm" onClick={handleEndRepeat} disabled={value.length === 0 ? true : false}>
+        <Button
+          variant="primary mr-1"
+          size="sm"
+          onClick={handleEndRepeat}
+          disabled={!propsHasVal()}
+        >
           End Repeat
         </Button>
       </ButtonGroup>

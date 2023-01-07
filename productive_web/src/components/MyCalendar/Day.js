@@ -44,7 +44,6 @@ const Day = (props) => {
   const repListener = (user) => {
     const start = props.date;
     const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-    // console.log(start.getTime())
 
     const ref = collection(db, "Users/" + user.uid + "/Repeats");
 
