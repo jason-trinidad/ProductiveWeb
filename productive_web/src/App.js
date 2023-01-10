@@ -67,7 +67,7 @@ function App() {
         } else {
           signInAnonymously(auth)
             .then(() => {
-              addFirstLine();
+              console.log("Logged in")
             })
             .catch((error) => {
               const errorMessage = error.message;

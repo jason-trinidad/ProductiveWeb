@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { scheduleRepeat, update } from "../../db/db-actions";
+import { scheduleRepeat, updateAllRepeats } from "../../db/db-actions";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Popover from "react-bootstrap/Popover";
 
@@ -54,7 +54,7 @@ const Event = (props) => {
 
   const updateEventData = (formData) => {
     if (formData.title) {
-      update(props.docSnap, formData.title);
+      updateAllRepeats(props.docSnap, {title: formData.title});
     } else if (formData.repeatKind) {
       scheduleRepeat(props.docSnap, formData);
     }

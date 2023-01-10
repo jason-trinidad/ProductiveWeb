@@ -11,7 +11,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
 import "./List.module.css";
-import { carriageReturn, orderBelow } from "../../db/db-actions";
+import { carriageReturn, addFirstLine, orderBelow } from "../../db/db-actions";
 
 // Known bugs:
 // 1. Drop is a bit ratchety (i.e. jolts after a drop).
@@ -37,9 +37,11 @@ export const List = (props) => {
 
     // Invoke listener
     const u = onSnapshot(q, (querySnapshot) => {
-      querySnapshot.empty
-        ? setTaskList([])
-        : setTaskList(querySnapshot.docs);
+      if (querySnapshot.empty) {
+        addFirstLine();
+      } else {
+        setTaskList(querySnapshot.docs);
+      }
     });
 
     return u;
