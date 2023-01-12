@@ -65,31 +65,6 @@ export const MyCalendar = React.forwardRef((props, ref) => {
     };
   }, [isInitialRender, displayDates]);
 
-  // const getTimeFromCoords = (e) => {
-  //   // const dfOrigin = { x: ref.current.offsetLeft, y: ref.current.offsetTop };
-  //   // const dfDims = {
-  //   //   x: ref.current.clientWidth,
-  //   //   y: ref.current.clientHeight,
-  //   // };
-  //   // console.log("S height: " + ref.current.scrollHeight + ", S top: " + ref.current.scrollTop)
-  //   // console.log(ref.current.clientHeight)
-
-  //   const scrollTop = ref.current.scrollTop;
-  //   const totalScroll = ref.current.scrollHeight;
-  //   const mouseData = { x: e.pageX, y: e.pageY - (ref.current.offsetTop + ref.current.clientTop) };
-  //   const xData = {
-  //     width: ref.current.clientWidth,
-  //     origin: ref.current.offsetLeft,
-  //   };
-  //   return getDateTime(
-  //     mouseData,
-  //     xData,
-  //     scrollTop,
-  //     totalScroll,
-  //     displayDates[0]
-  //   );
-  // };
-
   // Necessary to display time while dragging list item
   const handleCursorTime = (e) => {
     setTimeout(() => {

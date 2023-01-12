@@ -67,6 +67,9 @@ export const addFirstLine = async () => {
   const taskStore = "Users/" + user.uid + "/Tasks";
 
   const newTask = doc(collection(db, taskStore));
+
+
+  console.log("addFirstLine is writing to db")
   await setDoc(newTask, createNewTask());
 };
 
@@ -94,10 +97,14 @@ export const carriageReturn = async (prevDoc, tasks) => {
     createNewTask("", prevData.listIndex + 1, prevData.indents)
   );
 
+
+  console.log("carriageReturn is batch writing to db")
   await batch.commit();
 };
 
 export const update = (doc, title) => {
+
+  console.log("update is writing to db")
   updateDoc(doc.ref, { title: title });
 };
 
@@ -143,6 +150,8 @@ export const createTeamUp = async (doc, email) => {
     lastStreakUpdate: null,
   });
 
+
+  console.log("createTeamUp is writing to db")
   updateDoc(doc.ref, { teamUpRef: teamUpRef });
 };
 
@@ -158,6 +167,8 @@ export const getTeamUpInvites = () => {
 };
 
 export const confirmTeamUp = async (invite, task) => {
+
+  console.log("confirmTeamUp is writing to db")
   await updateDoc(invite.ref, {
     isConfirmed: true,
     streak: 0,
@@ -185,13 +196,17 @@ export const toggleDone = (doc) => {
     }
   }
 
+
+  console.log("toggleDone is writing to db")
   updateDoc(doc.ref, { isDone: !doc.data().isDone });
 };
 
 // Migrate anon data to new signed-in user
 export const migrate = async (user, tasks) => {
   const newRef = "Users/" + user.uid + "/Tasks";
-  tasks.map(async (task) => await addDoc(collection(db, newRef), task.data()));
+  tasks.map(async (task) => {
+    await addDoc(collection(db, newRef), task.data())
+  });
 };
 
 export const schedule = async (
@@ -243,6 +258,7 @@ export const scheduleRepeat = async (task, repeatInfo) => {
       repeatStartMSecs: task.data().startTime.toDate().getTime(),
       taskToClone: task.ref,
     });
+
     await updateDoc(task.ref, {
       repeatRef: newRepeat,
     });
@@ -308,6 +324,8 @@ export const endRepeat = async (repSnap, lastStartTime) => {
     if (task.data().startTime.toDate().getTime() > lastStartTime.getTime()) {
       remove(task);
     } else {
+
+    console.log("endRepeat is writing to db")
       await updateDoc(task.ref, {repeatRef: null});
     }
   })
