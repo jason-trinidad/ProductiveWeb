@@ -1,23 +1,34 @@
-import React, { useState, useEffect, useRef } from "react";
-import { Draggable } from "react-beautiful-dnd";
+import React, { useEffect, useState } from "react";
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Tooltip from 'react-bootstrap/Tooltip';
 
+import BelowSensor from "./BelowSensor";
 import styles from "./TaskItem.module.css";
-import { tasksActions } from "../../store/tasks-slice";
-import { useDispatch, useSelector } from "react-redux";
+import * as dbActions from "../../db/db-actions";
+import Indent from "./Indent";
 
-const TaskItemForm = (props) => {
-  const tasks = useSelector((state) => state.tasks);
-  const taskInfo = tasks[props.index];
+// TODO: this should be a controlled element from the element with a listener so that it will update correctly
+const TaskItem = (props) => {
+  const [enteredTitle, setEnteredTitle] = useState(props.data.title);
+  const taskData = props.snapshot.data();
+  const indents = Array.from({ length: taskData.indents }, (x, i) => i);
 
-  const [enteredTitle, setEnteredTitle] = useState(taskInfo.title);
-  const dispatch = useDispatch();
+  useEffect(() => {
+    setEnteredTitle(props.data.title);
+  }, [props.data.title]);
 
   // Handle keyboard shortcuts
-  const keyShortsHandler = (event) => {
+  const keyShortsHandler = (e) => {
     // "Backspace delete" TaskItem from List
-    if (event.key === "Backspace" && event.target.value === "") {
-        // dispatch(tasksActions.delete({keyToDelete: props.id}));
-        props.onConditionalDelete(props.id); // Using callback to allow List to handle list length
+    if (e.key === "Backspace" && e.target.value === "") {
+      dbActions.remove(props.snapshot);
+    } else if (e.key === "Tab" && e.shiftKey) {
+      e.preventDefault();
+      if (taskData.indents > 0) dbActions.indent(props.snapshot, -1);
+    } else if (e.key === "Tab") {
+      e.preventDefault();
+      if (taskData.indents < props.maxIndent)
+        dbActions.indent(props.snapshot, 1);
     }
   };
 
@@ -28,46 +39,85 @@ const TaskItemForm = (props) => {
 
   // Saves internal title state to store
   const blurHandler = () => {
-    dispatch(tasksActions.update({ key: props.id, title: enteredTitle }));
+    dbActions.update(props.snapshot, enteredTitle);
   };
 
   const submitHandler = (event) => {
     event.preventDefault();
-    // "Carriage return"
-    props.onCarriageReturn({ key: props.id, title: enteredTitle });
+
+    props.handleCarriageReturn(props.snapshot);
   };
 
   const completionHandler = () => {
-    dispatch(tasksActions.toggleDone({ toggleKey: props.id }));
-  }
+    dbActions.toggleDone(props.snapshot);
+  };
 
-  console.log('Task status is: ' + taskInfo.isDone);
+  const handleDragStart = (e) => {
+    e.stopPropagation();
+    const data = {
+      docPath: props.snapshot.ref.path,
+      startIndex: props.index,
+      obj: "task",
+    };
+    e.dataTransfer.setData("text/plain", JSON.stringify(data));
+  };
 
+  const handleClickArchive = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    dbActions.toggleArchived(props.snapshot);
+  };
+
+  // TODO: make IDs unique
   return (
-    <Draggable draggableId={(props.draggableId).toString()} index={props.index}>
-      {(provided) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-        >
-          <div className={taskInfo.isDone ? styles.completedTask : styles.task}>
-            <button onClick={completionHandler}/>
-            <form onSubmit={submitHandler}>
-              <input
-                autoFocus
-                type="text"
-                value={enteredTitle}
-                onBlur={blurHandler}
-                onChange={titleChangeHandler}
-                onKeyDown={keyShortsHandler}
-              />
-            </form>
-          </div>
+    <div
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDrop={props.handleNewChild}
+      style={{ display: "flex", flexDirection: "column" }}
+    >
+      <div style={{ display: "flex" }}>
+        {indents.map((num, index) => (
+          <Indent key={index} />
+        ))}
+        <div className={taskData.isDone ? styles.completedTask : styles.task}>
+          <button onClick={completionHandler} />
+          <form onSubmit={submitHandler}>
+            <input
+              autoFocus
+              id={props.index}
+              type="text"
+              value={enteredTitle}
+              onBlur={blurHandler}
+              onChange={titleChangeHandler}
+              onKeyDown={keyShortsHandler}
+            />
+          </form>
+          <OverlayTrigger
+            placement="top"
+            overlay={
+              <Tooltip id={`arcv-tooltip-${props.index}`}>Archive</Tooltip>
+            }
+          >
+            <button
+              style={{
+                padding: 0,
+                border: "none",
+                borderRadius: "0%",
+                backgroundColor: "transparent",
+                textAlign: "center",
+              }}
+              onClick={handleClickArchive}
+            >
+              🗑️
+            </button>
+          </OverlayTrigger>
         </div>
-      )}
-    </Draggable>
+      </div>
+      <BelowSensor id={props.index} onDrop={props.handleDropBelow} />
+    </div>
   );
 };
 
-export default TaskItemForm;
+export default TaskItem;

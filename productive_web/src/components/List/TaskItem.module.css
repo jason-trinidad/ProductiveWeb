@@ -1,17 +1,17 @@
 .task {
-    display: grid;
-    grid-template-columns: 15% 85%;
-    /* grid-column-gap: 5px; */
-    justify-content: start;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
     align-items: center;
-    height: 40px; width: 350px;
-    margin: 4px auto;
+    height: 40px; width: 100%;
     border-width: .75px;
     border-style: none none groove none;
     outline: solid transparent;
 }
 
 .task input {
+    width: 280px;
+    margin-left: 5px;
     font-size: 22px;
     font-weight: 100;
     font-family: Arial, Helvetica, sans-serif;
@@ -20,18 +20,15 @@
 
 .task input:focus {
     outline: solid transparent;
-    /* border-style: none none none none; */
 }
 
 .task button {
     justify-self: center;
     transition-duration: .3s;
-    width: 30px; height: 30px;
+    width: 25px; height: 25px;
     margin-left: 5px;
     border-radius: 50%;
-    border-style: solid;
-    border-width: 1.5px;
-    border-color: rgb(234, 28, 28);
+    border: 1.5px solid rgb(234, 28, 28);
     background-color: transparent;
 }
 

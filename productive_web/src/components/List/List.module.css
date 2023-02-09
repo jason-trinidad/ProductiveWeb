@@ -1,8 +1,5 @@
 .list {
-    display: flexbox;
+    display: flex;
     flex-direction: column;
     justify-content: center;
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: 400px; width: 350px;
 }

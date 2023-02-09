@@ -1,0 +1,7 @@
+.time-container {
+    display: flex;
+}
+
+.time-container input {
+    width: 2em;
+}

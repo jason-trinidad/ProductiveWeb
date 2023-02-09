@@ -1,83 +1,154 @@
-import React, { useState } from "react";
-import { DragDropContext, Droppable } from "react-beautiful-dnd";
-import { useDispatch, useSelector } from "react-redux";
-import { db } from "../../db";
-import { addDoc, collection } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { auth, db } from "../../db/db";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 
 import TaskItem from "./TaskItem";
-import { tasksActions } from "../../store/tasks-slice";
-import classes from "./List.module.css";
+import "./List.module.css";
+import { carriageReturn, addFirstLine, orderBelow } from "../../db/db-actions";
 
 // Known bugs:
-// 1. Drop is a bit ratchety (e.g. overlap on other element and there's a pause/lower element is moved).
-//       [I think this is due to some padding list items have that placeholder does not.]
+// 1. Drop is a bit ratchety (i.e. jolts after a drop).
+//      I'm not sure why this is.
 
-const List = () => {
-  const dispatch = useDispatch();
-  const taskList = useSelector((state) => state.tasks);
+export const List = (props) => {
+  const [taskList, setTaskList] = useState([]);
+  const [isChronoView, setIsChronoView] = useState(false);
+  const [isInitialRender, setIsInitialRender] = useState(true);
+  const [unsub, setUnsub] = useState(null);
+  const [authUnsub, setAuthUnsub] = useState(null);
 
-  console.log("List sees taskList:");
-  taskList.map((task) => console.log(task));
+  // Listen for desired tasks
+  const listen = (user) => {
+    const ref = collection(db, "Users/" + user.uid + "/Tasks");
+    const q = query(
+      ref,
+      where("isArchived", "==", false),
+      where("listIndex", ">=", 0), // Hack to allow order by listIndex
+      orderBy("listIndex"),
+      orderBy("startTime"),
+    );
 
-  // Trying out firebase
-  const ref = collection(db, "Tasks");
+    // Invoke listener
+    const u = onSnapshot(q, (querySnapshot) => {
+      if (querySnapshot.empty) {
+        addFirstLine();
+      } else {
+        setTaskList(querySnapshot.docs);
+      }
+    });
 
-  const createTaskInDB = async (newTask) => {
-    try {
-      addDoc(ref, newTask);
-    } catch (error) {
-      console.log("Error saving");
+    return u;
+  };
+
+  useEffect(() => {
+    if (isInitialRender) {
+      setIsInitialRender(false);
+
+      // Listen for auth state changes. If not logged in, log in anonymously
+      const u = onAuthStateChanged(auth, (user) => {
+        if (user) {
+          const unsub = listen(user);
+          setUnsub(() => () => unsub());
+        }
+      });
+
+      setAuthUnsub(() => () => u());
     }
-  };
 
-  // Add submitted task to list, create new task
-  const carriageReturn = (taskData) => {
-    // Update store with title of current TaskItem, then create a new one "underneath"
-    dispatch(tasksActions.update(taskData));
-    dispatch(tasksActions.carriageReturn(taskData));
+    return () => {
+      // Unsubscribe from listeners
+      if (unsub !== null) {
+        setTaskList([]);
+        unsub();
+      }
+      if (authUnsub !== null) authUnsub();
+    };
+  }, [isInitialRender]);
 
-    // createTaskInDB({ ...taskData, listIndex });
-  };
-
-  // Delete a task from the list if not the sole remaining task
-  const conditionalTaskDelete = (keyToDelete) => {
-    if (taskList.length > 1) {
-      dispatch(tasksActions.delete({ keyToDelete }));
+  const filterList = (taskList) => {
+    const res = [];
+    if (isChronoView) {
+      // TODO
+      console.log("Feature is not yet implemented");
+    // Alternative is "Task View", showing the most recent instance of each un-archived task
+    } else {
+      // Assumes tasks are ordered by startTime, and past repeats are archived
+      let lastRep = null;
+      taskList.forEach((task) => {
+        const curRep = task.data().repeatRef?.path;
+        if (curRep === undefined || curRep !== lastRep) {
+          res.push(task);
+          if (curRep) lastRep = curRep;
+        }
+      });
     }
+
+    return res;
   };
 
-  const dragEndHandler = (result) => {
-    if (!result.destination) return; // TODO: would bang-less syntax work?
-    dispatch(tasksActions.reorder(result));
+  const handleCarriageReturn = (docSnap) => {
+    carriageReturn(docSnap, filterList(taskList));
+  }
+
+  const handleNewChild = async (e) => {
+    e.preventDefault();
+
+    const tasks = filterList(taskList);
+    const dest = Number(e.target.id);
+    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+
+    if (data.docPath !== tasks[dest].ref.path)
+      orderBelow(
+        tasks,
+        data.startIndex,
+        dest,
+        true
+      );
+  };
+
+  const handleDropBelow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Split id to find index number
+
+    const tasks = filterList(taskList);
+    const dest = Number(e.target.id);
+    const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+
+    if (data.docPath !== tasks[dest].ref.path)
+      orderBelow(
+        tasks,
+        data.startIndex,
+        dest,
+        false
+      );
   };
 
   return (
-    <>
-      <h2>List</h2>
-      {/* <div className={classes.list}> */}
-        <DragDropContext onDragEnd={dragEndHandler}>
-          <Droppable droppableId="list">
-            {(provided) => (
-              <div className={classes.list} ref={provided.innerRef} {...provided.droppableProps}>
-                {taskList.map((task, index) => (
-                    <TaskItem
-                      key={task.key}
-                      id={task.key}
-                      draggableId={task.dragId}
-                      index={index}
-                      title={task.title}
-                      onCarriageReturn={carriageReturn}
-                      onConditionalDelete={conditionalTaskDelete}
-                    />
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      {/* </div> */}
-    </>
+    <div className="list">
+      {/* <TopSensor onDrop={handleTopSensorDrop} /> */}
+      {filterList(taskList).map((task, index) => (
+        <TaskItem
+          snapshot={task}
+          key={task.ref.path}
+          index={index}
+          data={{ ...task.data() }}
+          handleNewChild={handleNewChild}
+          handleDropBelow={handleDropBelow}
+          handleCarriageReturn={handleCarriageReturn}
+          maxIndent={
+            index === 0 ? 0 : filterList(taskList)[index - 1].data().indents + 1
+          }
+        />
+      ))}
+    </div>
   );
 };
-
-export default List;

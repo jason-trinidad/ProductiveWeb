@@ -1,0 +1,30 @@
+.event {
+    background-color: aqua;
+    opacity: .95;
+    width: 100%;
+    cursor: grab;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.event-done {
+    background-color: rgb(3, 179, 179);
+    width: 100%;
+    cursor: grab;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    text-decoration: line-through;
+}
+
+.edge {
+    border: 1px solid transparent;
+    cursor: ns-resize;
+}
+
+.description{
+    font-size: 14;
+    overflow-x: hidden;
+    justify-self: center;
+}
