@@ -1,73 +1,43 @@
-# Getting Started with Create React App
+# "Productive"
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Please contact me at trinidad961@gmail.com if you'd like a link to a live demo!
 
-## Available Scripts
+## Description
 
-In the project directory, you can run:
+"Productive" (temporary name) will one day be the ultimate productivity app! Eventually, Productive will allow users to work in teams to support each other in their task planning and completion.
 
-### `npm start`
+Currently, Productive allows a user to populate a nested to-do list, drag-and-drop tasks to schedule them on a calendar, and have tasks repeat on the calendar if so desired. Users have the option to sign in with Google to save their tasks. Signed-in users may also request a "team-up" with another user. This feature counts the times a repeating task has been completed, adding these completions to a total score between the two users.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Sample workflow
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+* Start by "dumping" your to-do items into the "List" section. You can change "tree" levels using Tab and Shift + Tab. (Don't worry too much about categories, we can sort those out later.)
 
-### `npm test`
+<img width="1432" alt="Screen Shot 2023-02-09 at 3 08 56 PM" src="https://user-images.githubusercontent.com/11757224/217950540-c1e96506-e553-4e41-8a63-aed1ab7b3242.png">
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* Create new tasks to serve as categories, and drag and drop your tasks to sort them:
 
-### `npm run build`
+<img width="1432" alt="Screen Shot 2023-02-09 at 3 13 41 PM" src="https://user-images.githubusercontent.com/11757224/217951360-170edf14-f8df-43b2-8885-2a54ed38bfa5.png">
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+* Schedule your tasks by dragging and dropping to the desired time on the calendar. Use the time readout to drop on the intended time.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+<img width="1432" alt="Screen Shot 2023-02-09 at 3 18 13 PM" src="https://user-images.githubusercontent.com/11757224/217952061-e4adaafa-3a57-4b86-99cf-9f9dfd17c325.png">
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+* Manage repeats for a task by clicking on the task in the calendar:
 
-### `npm run eject`
+<img width="1432" alt="Screen Shot 2023-02-09 at 3 22 09 PM" src="https://user-images.githubusercontent.com/11757224/217952731-f500df4c-cf77-46b2-8e56-6d800f247f45.png">
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+* Sign-in using a Google account to save your new plan:
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+<img width="1438" alt="Screen Shot 2023-02-09 at 3 25 42 PM" src="https://user-images.githubusercontent.com/11757224/217953237-60470704-56fe-4a7e-a77a-f492961ed69f.png">
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+* Invite a friend to team-up. Type your friend's email address, hit enter, and your email address will appear as an option for a team-up on their events:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+<img width="445" alt="Screen Shot 2023-02-09 at 3 30 25 PM" src="https://user-images.githubusercontent.com/11757224/217953949-4d0073a0-66f7-45d2-864e-5d42594d5008.png">
 
-## Learn More
+## Future improvements
+Making the app easier to develop is a top priority now that an MVP has been created and usefulness has been demonstrated (at least to this user!).
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-
-### Ideas for settings
-1. Notify if task is unscheduled with upcoming deadline (or parent deadline)
+In the near future, I hope to:
+1. Add a testing framework (e.g. Jest) and tests to speed up testing of changes and new features
+2. Standardize CSS across the app. CSS has proven to be one of the biggest challenges for this project. I would like experiment and find a preferred approach going forward
+3. Change the way task order is stored to a linked-list model. This should dramatically improve the current I/O performance. This change will also necessitate changing the implementation of repeating calendar tasks, and implementing lazy loading of the task list (to compensate for losing the ability to sort the task list on the server via a query).
