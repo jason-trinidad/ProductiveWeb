@@ -1,6 +1,6 @@
 # "Productive"
 
-Please contact me at trinidad961@gmail.com if you'd like a link to a live demo!
+Please contact me at jatrinidad@alumni.stanford.edu if you'd like a link to a live demo!
 
 ## Description
 
