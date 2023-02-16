@@ -9,16 +9,6 @@ export default defineConfig({
   build: {
     outDir: 'build',
   },
-  esbuild: {
-    loader: 'jsx',
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      loader: {
-        ".js": "jsx",
-      },
-    },
-  },
   plugins: [
     reactRefresh(),
     svgrPlugin({
