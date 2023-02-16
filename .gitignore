@@ -1,0 +1,2 @@
+# Ignore private DB config
+./productive_web/src/fb-config.js
